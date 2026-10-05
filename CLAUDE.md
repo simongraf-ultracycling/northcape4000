@@ -19,6 +19,9 @@ alles live über eine separate Seite mit geheimem Link.
 ## Architektur
 
 - PWA auf GitHub Pages: https://simongraf-ultracycling.github.io/northcape4000/
+  Veröffentlichung über den eigenen Ablauf `.github/workflows/pages.yml` (Pages-Source
+  "GitHub Actions"): bei jedem Push auf `main` erst `node tools/check.mjs`, dann nur die
+  App-Dateien (index.html, manifest, sw.js, css/, js/, icons/) veröffentlichen.
 - Reines HTML/CSS/JavaScript mit ES-Modulen. **Kein Build-Tool, kein npm, kein Framework.**
 - Firebase (Firestore + Authentication E-Mail/Passwort) über das offizielle modulare
   Firebase JS SDK vom CDN (gstatic), **Version fest gepinnt** in `js/version.js`.
@@ -52,6 +55,7 @@ js/update.js            Service-Worker-Registrierung, Update-Erkennung, Cache le
 js/ui/display.js        Design, Dunkel/Hell/Automatisch, Renn-Modus (setzt data-Attribute)
 js/ui/…                 Oberfläche: dom-Helfer, Symbole, Hülle, Router, Ansichten
 tools/check.mjs         Regel-Prüfung: node tools/check.mjs (nur Node-Bordmittel)
+.github/workflows/pages.yml   Prüfen + Veröffentlichen auf GitHub Pages (bei Push auf main)
 tools/make_icons.py     Icons einmalig erzeugen (nur Python-Standardbibliothek)
 ```
 
