@@ -1,0 +1,831 @@
+/* ==========================================================================
+   NorthCape 4000 – Layout und Komponenten
+   Farben, Radien, Unschärfe, Schatten NUR über Variablen aus css/tokens.css.
+   ========================================================================== */
+
+/* --- Grundlagen ----------------------------------------------------------- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+html {
+  background: var(--bg-base);
+  color: var(--text);
+  font-family: var(--font-family);
+  font-size: var(--font-size);
+  line-height: var(--line-height);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  touch-action: manipulation; /* kein Doppeltipp-Zoom, keine Tipp-Verzögerung */
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  position: relative;
+  overscroll-behavior-y: none;
+}
+
+/* Ruhiger Hintergrund mit Farbverlauf (fix, damit das Glas darüber gleitet) */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: var(--bg-image), var(--bg-base);
+  pointer-events: none;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+a {
+  color: var(--accent);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button,
+a,
+label,
+summary,
+.tab {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* --- Glas ----------------------------------------------------------------- */
+
+.glass {
+  background: var(--glass-sheen), var(--glass-fill);
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
+  border: 1px solid var(--glass-border);
+  box-shadow: inset 0 1px 0 var(--glass-edge), var(--glass-shadow);
+}
+
+/* Schwebende Leisten: Inhalt scrollt darunter durch → deckender */
+.app-header.glass,
+.tabbar.glass {
+  background: var(--glass-sheen), var(--glass-fill-bar);
+}
+
+.banner.glass,
+.toast.glass {
+  background: var(--glass-sheen), var(--glass-fill-banner);
+}
+
+/* --- Sim-Leiste (deutlich sichtbar, deckt auch die Statusleiste ab) ------- */
+
+.sim-bar {
+  display: none;
+  position: fixed;
+  z-index: 40;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: calc(env(safe-area-inset-top) + var(--sim-bar-height));
+  padding: env(safe-area-inset-top) var(--gutter) 0;
+  background: var(--sim);
+  color: var(--text-on-sim);
+  font-size: var(--font-size-small);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-s);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+:root.sim .sim-bar {
+  display: flex;
+}
+
+/* --- Kopfzeile (schwebende Glas-Kapsel) ----------------------------------- */
+
+.app-header {
+  position: fixed;
+  z-index: 30;
+  top: calc(env(safe-area-inset-top) + var(--sim-bar-height) + var(--space-xs));
+  left: calc(var(--floating-gap) + env(safe-area-inset-left));
+  right: calc(var(--floating-gap) + env(safe-area-inset-right));
+  height: var(--header-height);
+  border-radius: var(--radius-pill);
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 2px 2px 2px var(--space-l);
+}
+
+:root.sim .app-header,
+:root.offline-sim .app-header {
+  border-color: var(--sim);
+}
+
+.app-header.has-back {
+  padding-left: 2px;
+}
+
+.header-title {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-size-large);
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.header-back {
+  min-width: var(--tap-min);
+  height: calc(var(--header-height) - 4px);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--accent);
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  justify-content: center;
+  padding: 0;
+  cursor: pointer;
+}
+
+.header-back svg {
+  width: 30px;
+  height: 30px;
+}
+
+.header-status {
+  height: calc(var(--header-height) - 4px);
+  min-width: var(--tap-min);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 0 var(--space-s);
+  cursor: pointer;
+}
+
+.header-back:active,
+.header-status:active {
+  background: var(--pressed);
+}
+
+/* --- Pillen & Punkte -------------------------------------------------------- */
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  height: 34px;
+  padding: 0 12px;
+  border-radius: var(--radius-pill);
+  background: var(--field-fill);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-strong);
+  white-space: nowrap;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: currentColor;
+  flex: none;
+}
+
+.is-ok { color: var(--ok); }
+.is-warn { color: var(--warn); }
+.is-danger { color: var(--danger); }
+.is-sim { color: var(--sim); }
+.is-offline { color: var(--offline); }
+.is-muted { color: var(--text-muted); }
+
+.pill .label {
+  color: var(--text);
+}
+
+/* --- Hauptbereich ----------------------------------------------------------- */
+
+.view {
+  padding:
+    calc(env(safe-area-inset-top) + var(--sim-bar-height) + var(--header-height) + var(--space-xs) + var(--space-m))
+    calc(var(--gutter) + env(safe-area-inset-right))
+    calc(max(env(safe-area-inset-bottom), var(--floating-gap)) + var(--tabbar-height) + var(--space-l) + var(--space-l))
+    calc(var(--gutter) + env(safe-area-inset-left));
+  max-width: 720px;
+  margin: 0 auto;
+  outline: none;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-m);
+}
+
+.section-title {
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-strong);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: var(--space-s) var(--space-m) calc(-1 * var(--space-xs));
+}
+
+.card {
+  border-radius: var(--radius-l);
+  padding: var(--space-m) var(--space-m);
+}
+
+.card h2 {
+  font-size: var(--font-size-large);
+  margin-bottom: var(--space-xs);
+}
+
+.muted {
+  color: var(--text-muted);
+}
+
+.small {
+  font-size: var(--font-size-small);
+}
+
+.placeholder {
+  text-align: center;
+  padding: var(--space-l) var(--space-m);
+}
+
+.placeholder svg {
+  width: 56px;
+  height: 56px;
+  color: var(--accent);
+  margin-bottom: var(--space-s);
+}
+
+.placeholder h2 {
+  font-size: var(--font-size-title);
+}
+
+.footnote {
+  text-align: center;
+  font-size: var(--font-size-small);
+  color: var(--text-muted);
+  padding: var(--space-s);
+}
+
+/* --- Listen / Zeilen (wie iOS-Einstellungen) ------------------------------- */
+
+.list {
+  border-radius: var(--radius-l);
+  overflow: hidden;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-s);
+  min-height: var(--tap-min);
+  padding: var(--space-s) var(--space-m);
+  color: var(--text);
+  text-decoration: none;
+  border: 0;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+}
+
+.list > .row + .row,
+.list > .kv + .kv,
+.list > * + * {
+  border-top: 1px solid var(--separator);
+}
+
+a.row,
+button.row,
+label.row {
+  cursor: pointer;
+}
+
+a.row:active,
+button.row:active,
+label.row:active {
+  background: var(--pressed);
+}
+
+.row-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.row-label {
+  font-weight: var(--font-weight-strong);
+}
+
+.row-sub {
+  font-size: var(--font-size-small);
+  color: var(--text-muted);
+}
+
+.row-icon {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  color: var(--accent);
+}
+
+.row-chevron {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  color: var(--text-muted);
+}
+
+/* Schlüssel/Wert (nur Anzeige) */
+.kv {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-m);
+  padding: 12px var(--space-m);
+}
+
+.kv-key {
+  color: var(--text-muted);
+  flex: none;
+}
+
+.kv-value {
+  text-align: right;
+  font-weight: var(--font-weight-strong);
+  overflow-wrap: break-word;
+  min-width: 0;
+}
+
+.kv-sub {
+  display: block;
+  font-size: var(--font-size-small);
+  font-weight: normal;
+  color: var(--text-muted);
+}
+
+/* --- Knöpfe ------------------------------------------------------------------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-s);
+  min-height: var(--tap-min);
+  min-width: var(--tap-min);
+  padding: 0 var(--space-l);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-sheen), var(--glass-fill);
+  color: var(--text);
+  font-size: var(--font-size);
+  font-weight: var(--font-weight-strong);
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 var(--glass-edge);
+  transition: transform 0.12s ease, filter 0.12s ease;
+}
+
+.btn:active {
+  transform: scale(0.97);
+  filter: brightness(1.15);
+}
+
+.btn[disabled] {
+  opacity: 0.5;
+  cursor: default;
+  transform: none;
+}
+
+.btn-block {
+  width: 100%;
+}
+
+.btn-primary {
+  background: var(--accent);
+  border-color: transparent;
+  color: var(--text-on-accent);
+}
+
+.btn-danger {
+  background: var(--danger-fill);
+  border-color: transparent;
+  color: var(--text-on-danger);
+}
+
+.btn-sim {
+  background: var(--sim);
+  border-color: transparent;
+  color: var(--text-on-sim);
+}
+
+.btn svg {
+  width: 24px;
+  height: 24px;
+}
+
+.btn-row {
+  display: flex;
+  gap: var(--space-s);
+  flex-wrap: wrap;
+}
+
+.btn-row > .btn {
+  flex: 1 1 140px;
+}
+
+/* --- Schalter (gross, ganze Zeile tippbar) ------------------------------------ */
+
+.switch {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: none;
+  position: relative;
+  width: 64px;
+  height: 38px;
+  margin: 0;
+  border-radius: var(--radius-pill);
+  background: var(--switch-off);
+  cursor: pointer;
+  transition: background 0.18s ease;
+}
+
+.switch::before {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--switch-knob);
+  box-shadow: var(--switch-knob-shadow);
+  transition: transform 0.18s ease;
+}
+
+.switch:checked {
+  background: var(--switch-on);
+}
+
+.switch:checked::before {
+  transform: translateX(26px);
+}
+
+.switch.switch-sim:checked {
+  background: var(--sim);
+}
+
+.switch[disabled] {
+  opacity: 0.5;
+}
+
+/* --- Eingabefelder (mind. 16px, sonst zoomt iOS) --------------------------- */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.field-label {
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-strong);
+  color: var(--text-muted);
+  padding-left: var(--space-xs);
+}
+
+.input,
+.select {
+  width: 100%;
+  min-height: var(--tap-min);
+  padding: 0 var(--space-m);
+  font-size: max(16px, var(--font-size));
+  border-radius: var(--radius-m);
+  border: 1px solid var(--field-border);
+  background: var(--field-fill);
+  color: var(--text);
+}
+
+.input:focus,
+.select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: var(--focus-ring);
+}
+
+.input::placeholder {
+  color: var(--text-muted);
+}
+
+/* iOS: Datum/Zeit-Felder gleich hoch wie andere Felder */
+.input::-webkit-date-and-time-value {
+  text-align: left;
+  min-height: 1.4em;
+}
+
+.form-error {
+  color: var(--danger);
+  font-weight: var(--font-weight-strong);
+}
+
+/* --- Untere Tab-Leiste (schwebende Glas-Kapsel) ---------------------------- */
+
+.tabbar {
+  position: fixed;
+  z-index: 30;
+  left: calc(var(--floating-gap) + env(safe-area-inset-left));
+  right: calc(var(--floating-gap) + env(safe-area-inset-right));
+  bottom: max(env(safe-area-inset-bottom), var(--floating-gap));
+  max-width: 560px;
+  margin: 0 auto;
+  height: var(--tabbar-height);
+  border-radius: var(--radius-pill);
+  display: flex;
+  align-items: stretch;
+  padding: 5px;
+  gap: 2px;
+}
+
+.tab {
+  flex: 1;
+  min-width: 0;
+  min-height: var(--tap-min);
+  border-radius: var(--radius-pill);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: var(--font-size-tiny);
+  font-weight: var(--font-weight-strong);
+}
+
+.tab svg {
+  width: 27px;
+  height: 27px;
+}
+
+.tab:active {
+  background: var(--pressed);
+}
+
+.tab[aria-current="page"] {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* --- Banner & Hinweise ------------------------------------------------------ */
+
+.banner-area {
+  position: fixed;
+  z-index: 35;
+  left: calc(var(--floating-gap) + env(safe-area-inset-left));
+  right: calc(var(--floating-gap) + env(safe-area-inset-right));
+  bottom: calc(max(env(safe-area-inset-bottom), var(--floating-gap)) + var(--tabbar-height) + var(--space-s));
+  max-width: 560px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-s);
+  pointer-events: none;
+}
+
+.banner {
+  pointer-events: auto;
+  width: 100%;
+  min-height: 64px;
+  border-radius: var(--radius-l);
+  display: flex;
+  align-items: center;
+  gap: var(--space-s);
+  padding: var(--space-s) var(--space-m);
+  text-align: left;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.banner:active {
+  transform: scale(0.98);
+}
+
+.banner svg {
+  width: 30px;
+  height: 30px;
+  flex: none;
+}
+
+.banner-accent {
+  border-color: var(--accent);
+}
+
+.banner-accent svg {
+  color: var(--accent);
+}
+
+.banner-danger {
+  border-color: var(--danger);
+}
+
+.banner-danger svg {
+  color: var(--danger);
+}
+
+.banner-title {
+  font-weight: 700;
+}
+
+.banner-sub {
+  font-size: var(--font-size-small);
+  color: var(--text-muted);
+}
+
+.toast {
+  pointer-events: none;
+  align-self: center;
+  border-radius: var(--radius-pill);
+  padding: var(--space-s) var(--space-l);
+  font-weight: var(--font-weight-strong);
+}
+
+/* --- Anmeldung ------------------------------------------------------------- */
+
+.login {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding:
+    calc(env(safe-area-inset-top) + var(--space-l))
+    calc(var(--gutter) + env(safe-area-inset-right))
+    calc(env(safe-area-inset-bottom) + var(--space-l))
+    calc(var(--gutter) + env(safe-area-inset-left));
+}
+
+.login-card {
+  width: 100%;
+  max-width: 420px;
+  border-radius: var(--radius-l);
+  padding: var(--space-l);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-m);
+}
+
+.login-logo {
+  width: 88px;
+  height: 88px;
+  border-radius: var(--radius-m);
+  align-self: center;
+  box-shadow: var(--glass-shadow);
+}
+
+.login h1 {
+  font-size: var(--font-size-hero);
+  text-align: center;
+}
+
+.login-intro {
+  text-align: center;
+  color: var(--text-muted);
+}
+
+/* Während der Anmeldung: App-Hülle ausblenden */
+body.logged-out .app-header,
+body.logged-out .tabbar,
+body.logged-out .view {
+  display: none;
+}
+
+/* --- Debug ------------------------------------------------------------------- */
+
+.result {
+  border-radius: var(--radius-m);
+  padding: var(--space-s) var(--space-m);
+  background: var(--field-fill);
+  font-size: var(--font-size-small);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.result-line {
+  display: flex;
+  gap: var(--space-s);
+  align-items: baseline;
+}
+
+.result-line .mark {
+  flex: none;
+  width: 1.4em;
+  text-align: center;
+  font-weight: 700;
+}
+
+.log-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.log-entry {
+  padding: var(--space-s) 0;
+  border-top: 1px solid var(--separator);
+  font-size: var(--font-size-small);
+  -webkit-user-select: text;
+  user-select: text;
+  overflow-wrap: anywhere;
+}
+
+.log-entry:first-child {
+  border-top: 0;
+}
+
+.log-meta {
+  color: var(--text-muted);
+  font-size: var(--font-size-tiny);
+}
+
+.log-entry.level-error .log-level { color: var(--danger); }
+.log-entry.level-warn .log-level { color: var(--warn); }
+.log-entry.level-info .log-level { color: var(--accent); }
+
+.log-entry pre {
+  white-space: pre-wrap;
+  font-size: var(--font-size-tiny);
+  color: var(--text-muted);
+  margin: var(--space-xs) 0 0;
+}
+
+.log-entry summary {
+  color: var(--accent);
+  font-size: var(--font-size-tiny);
+  padding: var(--space-xs) 0;
+  cursor: pointer;
+}
+
+/* --- Notfall-Anzeige (js/boot.js) ------------------------------------------ */
+
+.boot-fallback {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  overflow: auto;
+  padding: calc(env(safe-area-inset-top) + 24px) 20px calc(env(safe-area-inset-bottom) + 24px);
+  background: var(--bg-base);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.boot-fallback pre {
+  white-space: pre-wrap;
+  font-size: var(--font-size-tiny);
+  color: var(--text-muted);
+}
+
+/* --- Bewegung reduzieren ------------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
+}
