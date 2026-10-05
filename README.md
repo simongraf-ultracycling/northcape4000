@@ -73,6 +73,11 @@ evtl. trotzdem als "Secret" – das ist erwartet). Zusätzlicher Schutz:
 3. App vom Home-Bildschirm starten, anmelden. Danach bleibt sie angemeldet und startet
    auch ohne Netz.
 
+iOS übernimmt einige Einstellungen (z.B. die Statusleiste) nur beim Hinzufügen zum
+Home-Bildschirm. Zeigt die App "Oberer Rand unscharf?", sie einmal entfernen und neu
+hinzufügen (Anleitung unter Mehr → Darstellung). Vorher prüfen, dass oben kein ⇅ steht;
+danach neu anmelden.
+
 ## Neue Version veröffentlichen
 
 1. Änderungen machen, `VERSION` in `js/version.js` erhöhen, `CHANGELOG.md` nachführen.

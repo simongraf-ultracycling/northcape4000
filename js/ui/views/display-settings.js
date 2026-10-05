@@ -1,64 +1,64 @@
-// Mehr → Darstellung: Farbmodus, Design, Renn-Modus.
+// Mehr → Darstellung: Farbmodus, Renn-Modus, Hinweis für alte Installationen.
 
+import { VERSION } from '../../version.js';
 import { button, h, icon, sectionTitle, switchRow } from '../dom.js';
 import {
   AUTO_MODE,
   MODES,
-  THEMES,
   getColorMode,
   getEffectiveMode,
-  getTheme,
+  hideReinstallHint,
   isRaceModeSwitchOn,
+  needsReinstall,
   onDisplayChange,
-  schemeOf,
   setColorMode,
   setRaceMode,
-  setTheme,
   systemForcesRaceMode,
 } from '../display.js';
 import { ICONS } from '../icons.js';
 
 const modeName = (id) => MODES.find((m) => m.id === id)?.name || id;
 
-// Farbmodus: Kacheln mit Farbkreis (3 × 2)
+// Farbmodus: Kacheln mit Farbkreis (3 × 2). Die Farbkreise tragen selbst
+// data-mode und zeigen so Hintergrund und Kartenfarbe des Modus.
 function modeGrid() {
   const tiles = [...MODES, AUTO_MODE].map((mode) => {
     const input = h('input', { type: 'radio', name: 'color-mode', value: mode.id });
     input.addEventListener('change', () => input.checked && setColorMode(mode.id));
     const dot =
       mode.id === AUTO_MODE.id
-        ? h('span', { class: 'mode-dot mode-dot-auto', 'aria-hidden': 'true' })
-        : h('span', { class: 'mode-dot', dataset: { mode: mode.id, scheme: mode.scheme }, 'aria-hidden': 'true' });
+        ? h(
+            'span',
+            { class: 'mode-dot mode-dot-auto', 'aria-hidden': 'true' },
+            h('span', { class: 'mode-half', dataset: { mode: AUTO_MODE.light } }),
+            h('span', { class: 'mode-half', dataset: { mode: AUTO_MODE.dark } }),
+          )
+        : h('span', { class: 'mode-dot', dataset: { mode: mode.id }, 'aria-hidden': 'true' });
     return h('label', { class: 'mode-tile glass', dataset: { value: mode.id } }, input, dot, mode.name);
   });
   return h('div', { class: 'mode-grid', role: 'radiogroup', 'aria-label': 'Farbmodus' }, tiles);
 }
 
-// Mini-Vorschau eines Designs im aktuellen Farbmodus
-function swatch(themeId) {
-  const mode = getEffectiveMode();
+// Alte Installation (Statusleiste "black-translucent"): Anleitung zum Neu-Hinzufügen
+function reinstallCard(onHide) {
   return h(
-    'span',
-    { class: 'swatch', dataset: { theme: themeId, mode, scheme: schemeOf(mode) }, 'aria-hidden': 'true' },
-    h('span', { class: 'swatch-aa', text: 'Aa' }),
-    icon(ICONS.status, 'swatch-icon'),
-    h('span', { class: 'swatch-pill' }),
+    'section',
+    { class: 'card glass stack' },
+    h('h2', { text: 'Oberer Rand unscharf?' }),
+    h('p', {
+      class: 'muted',
+      text: 'Ab iOS 26 legt das iPhone eine Unschärfe über den oberen Rand, solange die App unter der Statusleiste durchläuft. Die App ist jetzt anders eingestellt – iOS übernimmt das aber nur beim Hinzufügen zum Home-Bildschirm. Einmal neu hinzufügen:',
+    }),
+    h(
+      'ol',
+      { class: 'steps' },
+      h('li', { text: 'Oben in der Pille darf kein ⇅ stehen (alles synchronisiert).' }),
+      h('li', { text: 'App-Symbol auf dem Home-Bildschirm lange drücken → "App entfernen" → "Vom Home-Bildschirm löschen".' }),
+      h('li', { text: `In Safari simongraf-ultracycling.github.io/northcape4000 öffnen. Erscheint "Neue Version", antippen; unten auf der Anmeldeseite muss "Version ${VERSION}" (oder neuer) stehen.` }),
+      h('li', { text: 'Teilen → "Zum Home-Bildschirm", dann die App von dort starten und neu anmelden.' }),
+    ),
+    button('Hinweis ausblenden', { block: true, onClick: onHide }),
   );
-}
-
-function themeList() {
-  const rows = THEMES.map((theme) => {
-    const input = h('input', { type: 'radio', name: 'theme', value: theme.id, class: 'choice', checked: theme.id === getTheme() });
-    input.addEventListener('change', () => input.checked && setTheme(theme.id));
-    return h(
-      'label',
-      { class: 'row' },
-      swatch(theme.id),
-      h('span', { class: 'row-text' }, h('span', { class: 'row-label', text: theme.name }), h('span', { class: 'row-sub', text: theme.description })),
-      input,
-    );
-  });
-  return h('div', { class: 'list glass', role: 'radiogroup', 'aria-label': 'Design' }, rows);
 }
 
 function preview() {
@@ -69,7 +69,7 @@ function preview() {
       'section',
       { class: 'card glass stack' },
       h('h2', { text: 'Tag 3 · 412 km' }),
-      h('p', { class: 'muted', text: 'So wirken Titel, Texte, Knöpfe und Anzeigen im gewählten Design.' }),
+      h('p', { class: 'muted', text: 'So wirken Titel, Texte, Knöpfe und Anzeigen im gewählten Farbmodus.' }),
       h(
         'div',
         { class: 'preview-row' },
@@ -103,7 +103,7 @@ export const displaySettingsView = {
   render(container) {
     const raceMode = switchRow({
       label: 'Renn-Modus (Glas reduzieren)',
-      sub: 'Deckende Flächen, klare Ränder, keine Schatten, maximaler Kontrast – besser im Sonnenlicht. Gilt für jedes Design.',
+      sub: 'Klare Ränder, keine Schatten, maximaler Kontrast – besser im Sonnenlicht. Gilt für jeden Farbmodus.',
       checked: isRaceModeSwitchOn(),
       onChange: (on) => setRaceMode(on),
     });
@@ -112,15 +112,20 @@ export const displaySettingsView = {
       class: 'footnote',
       text: 'Der Renn-Modus ist durch die Systemeinstellung "Transparenz reduzieren" bzw. "Kontrast erhöhen" ohnehin aktiv.',
     });
+    const reinstall = needsReinstall()
+      ? reinstallCard(() => {
+          hideReinstallHint();
+          reinstall.remove();
+        })
+      : null;
 
     const page = h(
       'div',
       { class: 'stack' },
+      reinstall,
       sectionTitle('Farbmodus'),
       modeGrid(),
       autoHint,
-      sectionTitle('Design'),
-      themeList(),
       sectionTitle('Renn-Modus'),
       h('div', { class: 'list glass' }, raceMode.row),
       forcedHint,
@@ -129,21 +134,15 @@ export const displaySettingsView = {
     );
     container.append(page);
 
-    // Auswahl, Vorschauen und Hinweise nach jeder Änderung nachführen
+    // Auswahl und Hinweise nach jeder Änderung nachführen
     const update = () => {
-      const mode = getEffectiveMode();
-      for (const el of page.querySelectorAll('.swatch')) {
-        el.dataset.mode = mode;
-        el.dataset.scheme = schemeOf(mode);
-      }
-      for (const input of page.querySelectorAll('input[name="theme"]')) input.checked = input.value === getTheme();
       for (const tile of page.querySelectorAll('.mode-tile')) {
         const selected = tile.dataset.value === getColorMode();
         tile.classList.toggle('is-selected', selected);
         tile.querySelector('input').checked = selected;
       }
       autoHint.hidden = getColorMode() !== AUTO_MODE.id;
-      autoHint.textContent = `Folgt der Einstellung des iPhones: ${modeName(AUTO_MODE.light)} bei Hell, ${modeName(AUTO_MODE.dark)} bei Dunkel – gerade ${modeName(mode)}.`;
+      autoHint.textContent = `Folgt der Einstellung des iPhones: ${modeName(AUTO_MODE.light)} bei Hell, ${modeName(AUTO_MODE.dark)} bei Dunkel – gerade ${modeName(getEffectiveMode())}.`;
       forcedHint.hidden = !systemForcesRaceMode();
     };
     update();

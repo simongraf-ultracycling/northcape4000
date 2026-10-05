@@ -42,7 +42,7 @@ index.html              App-Hülle (Kopfzeile, Tab-Leiste, CSP)
 manifest.webmanifest    PWA-Manifest
 sw.js                   Service Worker (Precache, Offline, Updates) – APP_FILES pflegen!
 firestore.rules         Sicherheitsregeln (in der Firebase-Konsole veröffentlichen)
-css/tokens.css          ALLE Design-Variablen: 5 Farbmodi, 10 Designs, Renn-Modus
+css/tokens.css          ALLE Design-Variablen: 5 Farbmodi, Renn-Modus
 css/app.css             Layout und Komponenten, nur mit Variablen
 icons/                  App-Icons (erzeugt mit tools/make_icons.py)
 js/boot.js              Frühstart: Darstellung, frühe Fehler, Notfall-Anzeige
@@ -58,7 +58,7 @@ js/store/firebase-backend.js   Firestore + Auth (nur von store.js benutzt)
 js/store/sim-backend.js        Lokaler Simulator (gleiche Schnittstelle)
 js/store/sim-seed.js           Testdaten für den Sim-Modus
 js/update.js            Service-Worker-Registrierung, Update-Erkennung, Cache leeren
-js/ui/display.js        Farbmodus, Design, Renn-Modus (setzt data-Attribute)
+js/ui/display.js        Farbmodus, Renn-Modus, Statusleiste (setzt data-Attribute)
 js/ui/…                 Oberfläche: dom-Helfer, Symbole, Hülle, Router, Ansichten
 tools/check.mjs         Regel-Prüfung: node tools/check.mjs (nur Node-Bordmittel)
 .github/workflows/pages.yml   Prüfen + Veröffentlichen auf GitHub Pages (bei Push auf main)
@@ -111,7 +111,7 @@ tools/make_icons.py     Icons einmalig erzeugen (nur Python-Standardbibliothek)
 
 | # | Etappe | Status |
 |---|--------|--------|
-| 1 | Grundgerüst: App-Hülle, Liquid-Glass-Design, Offline/Updates, Datenschicht, Login, Regeln, Sim-Modus, Debug | ✅ erledigt (v0.1.0; v0.4.0: allgemein für Bikepacking; v0.5.0: fünf neutrale Farbmodi × zehn Designs) |
+| 1 | Grundgerüst: App-Hülle, Liquid-Glass-Design, Offline/Updates, Datenschicht, Login, Regeln, Sim-Modus, Debug | ✅ erledigt (v0.1.0; v0.4.0: allgemein für Bikepacking; v0.6.0: ein schlichtes Design, fünf neutrale Farbmodi, deckende Statusleiste) |
 | 2 | Status-Automat und Befindens-Regler mit Firebase-Sync | offen |
 | 3 | Karte: Testroute, Import der offiziellen GPX (nur privat!), Echtzeit-Standort, Versorgungspunkte, eigene POIs, Google-Maps-Knopf | offen |
 | 4 | Zeitplan: Kontrollpunkte/Gates, Zeitfenster, Etappen, Fähren-Rechner | offen |
@@ -123,60 +123,46 @@ tools/make_icons.py     Icons einmalig erzeugen (nur Python-Standardbibliothek)
 
 ## Design-Grundsätze
 
-- **Schlicht, neutral, rund.** Knöpfe, Eingabefelder, Tabs, Toasts und die
-  Kopfzeilen-Bedienelemente sind Pillen. Ruhige Flächen ohne Farbverläufe.
-- **Keine Unschärfe, keine Verläufe am Rand** (Simon mag das ausdrücklich nicht – "die
-  Schrift verläuft"). Kopf- und Fussbereich (`.top-cover`, `.bottom-cover`) sind deckend
-  in der Hintergrundfarbe; beim Scrollen erscheint unter dem Titel eine feine Linie
-  (`:root.scrolled`, gesetzt in `js/ui/shell.js`). Der Titel steht als Text oben, Zurück
-  und Verbindungsanzeige sind kleine Pillen (`.chip`, `.chip-round`, 44 px sichtbar,
-  56 px Tippfläche).
-- **Unten:** Tab-Leiste als schwebende Pille, **konzentrisch zu den Bildschirmecken**
-  (gefällt Simon sehr): `js/boot.js` setzt `--screen-radius` je iPhone-Modell (nach
-  Bildschirmgrösse), Abstand zu Rand und Boden `--tabbar-inset` = Eckradius − halbe
-  Leistenhöhe (mind. 10 px).
-- **Zwei unabhängige Einstellungen** (Mehr → Darstellung):
-  - **Farbmodus** `data-mode` (neutral, flach): `weiss`, `hellgrau` (hell), `dunkelgrau`,
-    `dunkelblau` (Standard), `schwarz` (dunkel); daraus folgt `data-scheme="light|dark"`.
-    Dazu "Automatisch": folgt `prefers-color-scheme` (Weiss bzw. Dunkelblau).
-  - **Design** `data-theme`: ruhige Varianten derselben Form – Schrift, Knopf-Stil,
-    Symbol-Strich und -Plättchen, Karten, Tab-Markierung, Akzentfarbe. **Nicht nur
-    Farbe ändern.** Standard: Klar.
-    | Design | Charakter |
-    |---|---|
-    | `klar` | wie iOS: SF Pro, gefüllte Knöpfe, schlichte Symbole, Akzent Blau |
-    | `rund` | SF Rounded, Symbole in getönten Kreisen, getönte Knöpfe, Tab gefüllt |
-    | `fein` | leichte Schrift, Strich 1,5, umrandete Karten/Knöpfe/Tab-Leiste |
-    | `kraeftig` (Kräftig) | fette Schrift, Strich 2,6, Symbole auf farbigen Plättchen |
-    | `klassik` | Serifen-Titel (New York), kursive Abschnitte, dunkle (invertierte) Knöpfe |
-    | `technik` | SF Mono für Titel/Werte, eckige Linienenden, umrandete Plättchen, Grün |
-    | `avenir` | Avenir Next, Symbole in Ringen, getönte Zweitknöpfe |
-    | `helvetica` | Helvetica Neue, schwarz-weiss, eckige Linienenden |
-    | `glas` | durchscheinende Flächen mit Glanz, Lichtkante und Schatten |
-    | `geometrisch` | Futura-Titel, Symbole in Farbkreisen, Akzent Himbeere |
-- Umsetzung in `css/tokens.css`: Grundwerte, Schema hell/dunkel (Statusfarben,
-  Schatten, Wahl des Akzents), Farbmodi (`--bg-base`, `--surface`, `--surface-2`,
-  `--surface-bar`, Text, Trennlinien, Felder), Design-Grundwerte `[data-theme]` und je
-  Design ein Block mit Form-Variablen (`--font-*`, `--section-*`, `--radius-card`,
-  `--card-*`, `--icon-stroke/-cap/-join`, `--badge-*`, `--btn-*`, `--bar-*`, `--tab-*`)
-  und Akzent `--accent-l/-d`, `--on-accent-l/-d` (hell/dunkel).
+- **Ein Design, schlicht wie iOS** (SF Pro, gefüllte Knöpfe, schlichte Symbole, Akzent
+  Blau). Knöpfe, Eingabefelder, Tabs, Toasts und die Kopfzeilen-Bedienelemente sind
+  Pillen. Ruhige, flache Flächen ohne Farbverläufe. Weitere Designs (v0.3.0 verrückt,
+  v0.4.0 Farbvarianten, v0.5.0 zehn Form-Varianten) hat Simon ausprobiert und verworfen –
+  er will genau dieses eine ("Klar").
+- **Fünf neutrale Farbmodi** (Mehr → Darstellung) `data-mode`: `weiss`, `hellgrau`
+  (hell), `dunkelgrau`, `dunkelblau` (Standard), `schwarz` (dunkel); daraus folgt
+  `data-scheme="light|dark"`. Dazu "Automatisch": folgt `prefers-color-scheme`
+  (Weiss bzw. Dunkelblau).
+- **Oben: nichts Unscharfes, keine Verläufe** (stört Simon sehr). Die iOS-Statusleiste
+  ist **deckend** (`apple-mobile-web-app-status-bar-style` = `default`) und trägt per
+  `theme-color` die Hintergrundfarbe des Farbmodus (`js/boot.js`, `js/ui/display.js`).
+  **Nie `black-translucent`:** Ab iOS 26 legt iOS sonst selbst eine Unschärfe
+  ("Scroll Edge Effect") über den oberen Rand der App. iOS liest den Wert nur beim
+  Hinzufügen zum Home-Bildschirm; alte Installationen erkennt `needsReinstall()`
+  (oberer Sicherheitsabstand > 0 im Hochformat) und zeigen eine Anleitung.
+  Darunter ist der Kopfbereich (`.top-cover`) deckend in der Hintergrundfarbe; beim
+  Scrollen erscheint unter dem Titel eine feine Linie (`:root.scrolled`, `js/ui/shell.js`).
+  Titel als Text, Zurück und Verbindungsanzeige als kleine Pillen (`.chip`,
+  `.chip-round`, 44 px sichtbar, 56 px Tippfläche).
+- **Unten:** Tab-Leiste als **freigestellte**, deckende Pille, **konzentrisch zu den
+  Bildschirmecken** (gefällt Simon sehr): Inhalt läuft dahinter und rundherum durch.
+  `js/boot.js` setzt `--screen-radius` je iPhone-Modell (nach Bildschirmgrösse), Abstand
+  zu Rand und Boden `--tabbar-inset` = Eckradius − halbe Leistenhöhe (mind. 10 px).
+- Umsetzung in `css/tokens.css`: Grundwerte (Schrift, Abstände, Radien), Schema
+  hell/dunkel (Akzent, Statusfarben, Schatten), Farbmodi (`--bg-base`, `--surface`,
+  `--surface-2`, `--surface-bar`, Text, Trennlinien, Felder), Renn-Modus.
   Nur iOS-Systemschriften verwenden (offline, keine Downloads).
-- Neues Design bzw. neuer Farbmodus: Block in `tokens.css`, Eintrag in `THEMES` bzw.
-  `MODES` (`js/ui/display.js`) und in den Listen in `js/boot.js` – `tools/check.mjs`
-  prüft das. Jede Kombination muss lesbar bleiben (Kontrast, Tippflächen ≥ 56 px) und
-  im Renn-Modus funktionieren.
-- Helle Farbmodi: Hinter der iOS-Statusleiste (weisse Schrift wegen
-  `black-translucent`) liegt eine leichte Abdunklung (`--statusbar-scrim`); auf dem
-  iPhone kontrollieren.
+- Neuer Farbmodus: Block in `tokens.css`, Eintrag in `MODES` (`js/ui/display.js`) und in
+  der Liste in `js/boot.js` – `tools/check.mjs` prüft das.
 - **Lesbarkeit hat Vorrang:** Text und Bedienelemente immer kontraststark.
-- **Renn-Modus (Glas reduzieren)** unter Mehr → Darstellung: behält Farbmodus, Schrift,
-  Formen und Akzent, macht aber alle Flächen deckend, Ränder deutlich, entfernt Glanz
-  und Schatten und setzt die Schrift auf maximalen Kontrast (Sonnenlicht). Automatisch
-  aktiv bei `prefers-reduced-transparency` bzw. `prefers-contrast: more`.
+- **Renn-Modus (Glas reduzieren)** unter Mehr → Darstellung: behält den Farbmodus,
+  zeigt Ränder an Karten, entfernt Schatten und setzt die Schrift auf maximalen Kontrast
+  (Sonnenlicht). Automatisch aktiv bei `prefers-reduced-transparency` bzw.
+  `prefers-contrast: more`.
 - Alle Farben, Radien, Schatten, Schriften als CSS-Variablen in `css/tokens.css`.
 - Touch: Tippflächen **mind. 56 px**, mit Handschuhen bedienbar, `touch-action: manipulation`,
   Eingabefelder **mind. 16 px** (kein Auto-Zoom). Ganze Zeilen tippbar (Schalter).
-- iOS-Home-Screen: `viewport-fit=cover`, Safe-Area-Abstände, Statusleiste black-translucent.
+- iOS-Home-Screen: `viewport-fit=cover` (unten bis an den Rand), Safe-Area-Abstände,
+  Statusleiste deckend (siehe oben).
 
 ## Feste Regeln
 

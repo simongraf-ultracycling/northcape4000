@@ -8,6 +8,7 @@ import { onLogChange } from '../log.js';
 import * as store from '../store.js';
 import { applyUpdate, getUpdateState, onUpdateStateChange } from '../update.js';
 import { hideBanner, showBanner } from './banners.js';
+import { needsReinstall } from './display.js';
 import { clear, h, icon } from './dom.js';
 import { ICONS } from './icons.js';
 
@@ -121,6 +122,19 @@ export function initShell() {
   };
   onUpdateStateChange(renderUpdate);
   renderUpdate(getUpdateState());
+
+  // Alte Installation mit durchsichtiger Statusleiste → Anleitung anbieten
+  if (needsReinstall()) {
+    showBanner('reinstall', {
+      title: 'Oberer Rand unscharf? – tippen',
+      sub: 'Einmal neu zum Home-Bildschirm hinzufügen (Anleitung)',
+      iconSvg: ICONS.display,
+      onTap: () => {
+        hideBanner('reinstall');
+        window.location.hash = '#mehr/darstellung';
+      },
+    });
+  }
 
   onLogChange((entries) => {
     const last = entries[entries.length - 1];

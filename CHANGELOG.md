@@ -4,6 +4,23 @@ Alle Änderungen an der App. Format angelehnt an [Keep a Changelog](https://keep
 Versionen nach [SemVer](https://semver.org/lang/de/). Die Versionsnummer steht ausschliesslich in
 `js/version.js` und wird bei jeder Änderung erhöht.
 
+## [0.6.0] – 2026-10-06
+
+### Geändert
+
+- **Unschärfe oben behoben:** Die iOS-Statusleiste ist jetzt deckend
+  (`apple-mobile-web-app-status-bar-style` "default") und trägt die Hintergrundfarbe des
+  Farbmodus (`theme-color`). Bisher lief die App unter der Statusleiste durch
+  ("black-translucent") – ab iOS 26 legt iOS dann selbst eine Unschärfe über den oberen
+  Rand. **iOS übernimmt die Änderung nur beim Hinzufügen zum Home-Bildschirm:** Die App
+  erkennt alte Installationen und zeigt eine Anleitung zum Neu-Hinzufügen (ausblendbar).
+- Die Abdunklung hinter der Statusleiste bei hellen Farbmodi entfällt.
+- Die Tab-Leiste ist freigestellt: Der Inhalt läuft dahinter und rundherum durch, die
+  Pille selbst ist deckend und konzentrisch zu den Bildschirmecken.
+- Nur noch ein Design (bisher "Klar"); die fünf Farbmodi und "Automatisch" bleiben.
+  Die Design-Auswahl ist entfernt.
+- Die Anmeldeseite zeigt die Versionsnummer.
+
 ## [0.5.0] – 2026-10-05
 
 ### Geändert

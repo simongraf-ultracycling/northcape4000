@@ -1,8 +1,7 @@
 /* ==========================================================================
    Layout und Komponenten
-   Farben, Radien, Schatten, Schriften und Formen NUR über Variablen aus
-   css/tokens.css – so funktionieren alle Designs und Farbmodi mit demselben
-   Aufbau.
+   Farben, Radien, Schatten und Schriften NUR über Variablen aus
+   css/tokens.css – so funktionieren alle Farbmodi mit demselben Aufbau.
    ========================================================================== */
 
 /* --- Grundlagen ----------------------------------------------------------- */
@@ -35,19 +34,6 @@ body {
   min-height: 100dvh;
   background: var(--bg-base);
   overscroll-behavior-y: none;
-}
-
-/* Abdunklung hinter der iOS-Statusleiste (nur bei hellen Farbmodi) */
-body::after {
-  content: "";
-  position: fixed;
-  z-index: 39;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: calc(env(safe-area-inset-top) + min(env(safe-area-inset-top), 10px)); /* 0 ohne Statusleiste */
-  background: var(--statusbar-scrim);
-  pointer-events: none;
 }
 
 h1,
@@ -84,19 +70,22 @@ summary,
   box-shadow: var(--focus-ring);
 }
 
-/* Symbole: Strichstärke und Linienenden je Design */
-svg {
-  stroke-width: var(--icon-stroke);
-  stroke-linecap: var(--icon-cap);
-  stroke-linejoin: var(--icon-join);
+/* Misst den oberen Sicherheitsabstand (js/ui/display.js) */
+.safe-probe {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: env(safe-area-inset-top);
+  visibility: hidden;
+  pointer-events: none;
 }
 
 /* --- Flächen (Karten, Listen) ---------------------------------------------- */
 
 .glass {
-  background: var(--card-sheen), var(--card-fill);
+  background: var(--surface);
   border: 1px solid var(--card-border);
-  box-shadow: var(--card-shadow);
 }
 
 /* --- Sim-Leiste (deutlich sichtbar, deckt auch die Statusleiste ab) ------- */
@@ -126,33 +115,25 @@ svg {
   display: flex;
 }
 
-/* --- Kopf- und Fussbereich: deckend in der Hintergrundfarbe --------------- */
+/* --- Kopfbereich: deckend in der Hintergrundfarbe -------------------------- */
 
-/* Kein Verlauf, keine Unschärfe: Inhalt verschwindet sauber unter dem Titel
-   bzw. unter der Tab-Leiste. Beim Scrollen erscheint oben eine feine Linie. */
-.top-cover,
-.bottom-cover {
+/* Kein Verlauf, keine Unschärfe: Inhalt verschwindet sauber unter dem Titel;
+   beim Scrollen erscheint eine feine Linie. Die iOS-Statusleiste darüber ist
+   deckend und trägt dieselbe Farbe (theme-color, js/ui/display.js). */
+.top-cover {
   position: fixed;
   z-index: 29;
+  top: 0;
   left: 0;
   right: 0;
+  height: calc(env(safe-area-inset-top) + var(--sim-bar-height) + var(--header-height) + var(--space-xs));
   background: var(--bg-base);
   pointer-events: none;
-}
-
-.top-cover {
-  top: 0;
-  height: calc(env(safe-area-inset-top) + var(--sim-bar-height) + var(--header-height) + var(--space-xs));
   transition: box-shadow 0.2s ease;
 }
 
 :root.scrolled .top-cover {
   box-shadow: 0 1px 0 var(--separator);
-}
-
-.bottom-cover {
-  bottom: 0;
-  height: calc(var(--tabbar-inset) + var(--tabbar-height) + var(--space-s));
 }
 
 /* --- Kopfzeile: Titel als Text, Bedienelemente als Pillen ------------------ */
@@ -173,7 +154,6 @@ svg {
   flex: 1;
   min-width: 0;
   padding: 0 8px;
-  font-family: var(--font-display);
   font-size: var(--font-size-title);
   font-weight: var(--font-weight-title);
   letter-spacing: var(--title-tracking);
@@ -214,9 +194,8 @@ svg {
 }
 
 .chip.glass {
-  background: var(--bar-sheen), var(--bar-fill);
-  border-color: var(--bar-border);
-  box-shadow: var(--chip-shadow);
+  background: var(--surface-bar);
+  border-color: var(--separator);
 }
 
 .chip-round {
@@ -250,7 +229,6 @@ svg {
   padding: 0 12px;
   border-radius: var(--radius-pill);
   background: var(--surface-2);
-  font-family: var(--font-numeric);
   font-size: var(--font-size-small);
   font-weight: var(--font-weight-strong);
   font-variant-numeric: tabular-nums;
@@ -303,13 +281,11 @@ svg {
 }
 
 .section-title {
-  font-family: var(--section-font);
-  font-size: var(--section-size);
-  font-weight: var(--section-weight);
-  font-style: var(--section-style);
-  text-transform: var(--section-transform);
-  letter-spacing: var(--section-tracking);
-  color: var(--section-color);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-strong);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
   margin: var(--space-s) var(--space-m) calc(-1 * var(--space-xs));
 }
 
@@ -321,7 +297,6 @@ svg {
 .card h2,
 .placeholder h2,
 .login h1 {
-  font-family: var(--font-display);
   font-weight: var(--font-weight-title);
   letter-spacing: var(--title-tracking);
 }
@@ -415,16 +390,11 @@ label.row:active {
   color: var(--text-muted);
 }
 
-/* Zeilen-Symbol: je nach Design frei, im Kreis, im Ring oder auf Plättchen */
 .row-icon {
   flex: none;
-  width: var(--badge-size);
-  height: var(--badge-size);
-  padding: var(--badge-pad);
-  background: var(--badge-bg);
-  color: var(--badge-color);
-  border: var(--badge-border);
-  border-radius: var(--badge-radius);
+  width: 30px;
+  height: 30px;
+  color: var(--accent);
 }
 
 .row-chevron {
@@ -450,7 +420,6 @@ label.row:active {
 
 .kv-value {
   text-align: right;
-  font-family: var(--font-numeric);
   font-weight: var(--font-weight-strong);
   font-variant-numeric: tabular-nums;
   overflow-wrap: break-word;
@@ -464,7 +433,7 @@ label.row:active {
   color: var(--text-muted);
 }
 
-/* --- Knöpfe (Pillen; Stil je Design) --------------------------------------- */
+/* --- Knöpfe (Pillen) ---------------------------------------------------------- */
 
 .btn {
   display: inline-flex;
@@ -475,14 +444,13 @@ label.row:active {
   min-width: var(--tap-min);
   padding: 0 var(--space-l);
   border-radius: var(--radius-pill);
-  border: var(--btn-border-width) solid var(--btn-border);
-  background: var(--btn-bg);
-  color: var(--btn-text);
+  border: 1px solid transparent;
+  background: var(--surface-2);
+  color: var(--text);
   font-size: var(--font-size);
-  font-weight: var(--btn-weight);
+  font-weight: var(--font-weight-strong);
   text-decoration: none;
   cursor: pointer;
-  box-shadow: var(--btn-shadow);
   transition: transform 0.12s ease, filter 0.12s ease;
 }
 
@@ -502,9 +470,8 @@ label.row:active {
 }
 
 .btn-primary {
-  background: var(--btn-primary-bg);
-  border-color: var(--btn-primary-border);
-  color: var(--btn-primary-text);
+  background: var(--accent-fill);
+  color: var(--text-on-accent);
 }
 
 .btn-danger {
@@ -628,10 +595,11 @@ label.row:active {
   font-weight: var(--font-weight-strong);
 }
 
-/* --- Untere Tab-Leiste: Pille, konzentrisch zu den Bildschirmecken --------- */
+/* --- Untere Tab-Leiste: freigestellte Pille, konzentrisch zu den Ecken ----- */
 
 /* Abstand zu Rand und Boden = Eckradius des iPhones − halbe Leistenhöhe
-   (--tabbar-inset in tokens.css); so verlaufen die Rundungen parallel. */
+   (--tabbar-inset in tokens.css); so verlaufen die Rundungen parallel.
+   Der Inhalt läuft dahinter und rundherum durch – die Pille ist deckend. */
 .tabbar {
   position: fixed;
   z-index: 30;
@@ -649,9 +617,9 @@ label.row:active {
 }
 
 .tabbar.glass {
-  background: var(--bar-sheen), var(--bar-fill);
-  border-color: var(--bar-border);
-  box-shadow: var(--bar-shadow);
+  background: var(--surface-bar);
+  border-color: var(--separator);
+  box-shadow: var(--shadow);
 }
 
 .tab {
@@ -664,7 +632,7 @@ label.row:active {
   align-items: center;
   justify-content: center;
   gap: 1px;
-  color: var(--tab-text);
+  color: var(--text-muted);
   text-decoration: none;
   font-size: var(--font-size-tiny);
   font-weight: var(--font-weight-strong);
@@ -681,10 +649,8 @@ label.row:active {
 }
 
 .tab[aria-current="page"] {
-  color: var(--tab-active-text);
-  background: var(--tab-active-bg);
-  font-weight: var(--tab-active-weight);
-  box-shadow: inset 0 0 0 1px var(--tab-active-border), var(--tab-active-shadow);
+  color: var(--accent);
+  background: var(--accent-soft);
 }
 
 /* --- Banner & Hinweise ------------------------------------------------------ */
@@ -705,8 +671,8 @@ label.row:active {
 
 .banner.glass,
 .toast.glass {
-  background: var(--bar-fill);
-  border-color: var(--bar-border);
+  background: var(--surface-bar);
+  border-color: var(--separator);
   box-shadow: var(--shadow);
 }
 
@@ -797,7 +763,6 @@ label.row:active {
   height: 88px;
   border-radius: 22px;
   align-self: center;
-  box-shadow: var(--shadow-soft);
 }
 
 .login h1 {
@@ -812,7 +777,6 @@ label.row:active {
 
 /* Während der Anmeldung: App-Hülle ausblenden */
 body.logged-out .top-cover,
-body.logged-out .bottom-cover,
 body.logged-out .app-header,
 body.logged-out .tabbar,
 body.logged-out .view {
@@ -885,91 +849,27 @@ body.logged-out .view {
   background: var(--surface);
 }
 
-/* Automatisch: halb Weiss, halb Dunkelblau */
+/* Automatisch: halb Weiss, halb Dunkelblau (Hälften tragen data-mode) */
 .mode-dot-auto {
-  background: linear-gradient(90deg, #ffffff 0 50%, #0b1324 50% 100%);
+  display: flex;
 }
 
 .mode-dot-auto::after {
   display: none;
 }
 
-/* --- Darstellung: Design-Auswahl ------------------------------------------- */
-
-/* Mini-Vorschau eines Designs: trägt selbst data-theme/data-mode/data-scheme
-   und zeigt dadurch Titelschrift, Symbol-Strich und Knopf-Stil. */
-.swatch {
-  position: relative;
-  flex: none;
-  width: 64px;
-  height: 64px;
-  border-radius: 18px;
-  overflow: hidden;
+.mode-half {
+  flex: 1;
   background: var(--bg-base);
-  border: 1px solid var(--separator-strong);
-  color: var(--text);
 }
 
-.swatch-aa {
-  position: absolute;
-  top: 6px;
-  left: 9px;
-  font-family: var(--font-display);
-  font-weight: var(--font-weight-title);
-  font-size: var(--font-size-large);
-  letter-spacing: var(--title-tracking);
-  line-height: 1.2;
-}
-
-.swatch-icon {
-  position: absolute;
-  top: 9px;
-  right: 8px;
-  width: 18px;
-  height: 18px;
-  color: var(--accent);
-}
-
-.swatch-pill {
-  position: absolute;
-  left: 9px;
-  right: 9px;
-  bottom: 9px;
-  height: 16px;
-  border-radius: var(--radius-pill);
-  background: var(--btn-primary-bg);
-  border: var(--btn-border-width) solid var(--btn-primary-border);
-}
-
-/* Auswahl-Zeile mit Häkchen (ganze Zeile tippbar) */
-.choice {
-  -webkit-appearance: none;
-  appearance: none;
-  flex: none;
-  width: 30px;
-  height: 30px;
+/* Nummerierte Anleitung */
+.steps {
   margin: 0;
-  border-radius: 50%;
-  border: 2px solid var(--field-border);
-  background: transparent;
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-}
-
-.choice:checked {
-  border-color: transparent;
-  background: var(--accent-fill);
-}
-
-.choice:checked::after {
-  content: "";
-  width: 8px;
-  height: 14px;
-  margin-top: -3px;
-  border: solid var(--text-on-accent);
-  border-width: 0 3px 3px 0;
-  transform: rotate(45deg);
+  padding-left: 1.4em;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
 }
 
 .preview-row {

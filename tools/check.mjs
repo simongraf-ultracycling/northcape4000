@@ -63,7 +63,7 @@ for (const f of [...jsFiles, 'index.html', 'manifest.webmanifest']) {
   if (read(f).includes('ß')) fail(`${f}: Schweizer Schreibweise – "ss" statt "ß"`);
 }
 
-// --- Designs und Farbmodi: js/ui/display.js ↔ js/boot.js ↔ css/tokens.css ----------
+// --- Farbmodi: js/ui/display.js ↔ js/boot.js ↔ css/tokens.css ---------------------
 const displaySrc = read('js/ui/display.js');
 const bootSrc = read('js/boot.js');
 const tokensSrc = read('css/tokens.css');
@@ -72,16 +72,6 @@ const cssBlock = (selector) => {
   const start = tokensSrc.indexOf(`${selector} {`);
   return start < 0 ? null : tokensSrc.slice(start, tokensSrc.indexOf('}', start));
 };
-
-const themeIds = [...displaySrc.matchAll(/\{ id: '([a-z]+)', name: '[^']+', description:/g)].map((m) => m[1]);
-if (!themeIds.length) fail('js/ui/display.js: THEMES nicht gefunden');
-const THEME_TOKENS = ['--accent-l', '--accent-d', '--on-accent-l', '--on-accent-d'];
-for (const id of themeIds) {
-  if (!bootSrc.includes(`'${id}'`)) fail(`js/boot.js: Design "${id}" fehlt in der Liste THEMES`);
-  const block = cssBlock(`[data-theme="${id}"]`);
-  if (!block) fail(`css/tokens.css: Block [data-theme="${id}"] fehlt`);
-  else for (const token of THEME_TOKENS) if (!block.includes(`${token}:`)) fail(`css/tokens.css: [data-theme="${id}"] definiert ${token} nicht`);
-}
 
 const modes = [...displaySrc.matchAll(/\{ id: '([a-z]+)', name: '[^']+', scheme: '(light|dark)' \}/g)].map((m) => ({ id: m[1], scheme: m[2] }));
 if (!modes.length) fail('js/ui/display.js: MODES nicht gefunden');

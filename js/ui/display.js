@@ -1,29 +1,18 @@
-// Darstellung: Design, Farbmodus und Renn-Modus (Glas reduzieren).
+// Darstellung: Farbmodus und Renn-Modus (Glas reduzieren).
 //
-// Setzt auf <html> die Attribute data-theme (Design), data-mode (Farbmodus),
-// data-scheme (hell/dunkel, folgt aus dem Farbmodus) und data-glass; alle
-// Werte dazu stehen in css/tokens.css. js/boot.js setzt dieselben Attribute
-// schon vor dem ersten Bild (Listen dort ebenfalls nachführen).
+// Setzt auf <html> die Attribute data-mode (Farbmodus), data-scheme
+// (hell/dunkel, folgt aus dem Farbmodus) und data-glass; alle Werte dazu
+// stehen in css/tokens.css. js/boot.js setzt dieselben Attribute schon vor
+// dem ersten Bild (Liste dort ebenfalls nachführen).
+//
+// Statusleiste: index.html verlangt eine deckende iOS-Statusleiste
+// (apple-mobile-web-app-status-bar-style "default"); ihre Farbe ist
+// theme-color = Hintergrund des Farbmodus, die Symbolfarbe wählt iOS selbst.
 //
 // Renn-Modus: per Schalter ODER automatisch, wenn das System "Transparenz
 // reduzieren" bzw. "Kontrast erhöhen" meldet (sofern unterstützt).
 
 import * as store from '../store.js';
-
-// Designs: Schrift, Knopf-Stil, Symbole, Karten – ruhige Varianten derselben
-// schlichten, runden Form (Farben kommen aus dem Farbmodus).
-export const THEMES = [
-  { id: 'klar', name: 'Klar', description: 'Wie iOS: SF Pro, gefüllte Knöpfe, schlichte Symbole.' },
-  { id: 'rund', name: 'Rund', description: 'Runde Schrift, Symbole in Kreisen, getönte Knöpfe.' },
-  { id: 'fein', name: 'Fein', description: 'Leichte Schrift, feine Linien, umrandete Flächen.' },
-  { id: 'kraeftig', name: 'Kräftig', description: 'Fette Schrift, kräftige Symbole auf Farbplättchen.' },
-  { id: 'klassik', name: 'Klassik', description: 'Serifen-Titel, schlanke Symbole, dunkle Knöpfe.' },
-  { id: 'technik', name: 'Technik', description: 'Monospace-Schrift, eckige Linienenden, Akzent Grün.' },
-  { id: 'avenir', name: 'Avenir', description: 'Avenir Next, Symbole in Ringen, getönte Knöpfe.' },
-  { id: 'helvetica', name: 'Helvetica', description: 'Schwarz-weiss, eckige Linienenden, ohne Farbe.' },
-  { id: 'glas', name: 'Glas', description: 'Durchscheinende Flächen mit Lichtkante und Schatten.' },
-  { id: 'geometrisch', name: 'Geometrisch', description: 'Futura-Titel, Symbole in Farbkreisen.' },
-];
 
 // Farbmodi: neutrale Hintergründe und Flächen
 export const MODES = [
@@ -37,24 +26,12 @@ export const MODES = [
 // "Automatisch" folgt der iPhone-Einstellung Hell/Dunkel
 export const AUTO_MODE = { id: 'auto', name: 'Automatisch', light: 'weiss', dark: 'dunkelblau' };
 
-const DEFAULT_THEME = 'klar';
 const DEFAULT_MODE = 'dunkelblau'; // Dunkles Design als Standard
 const LEGACY_MODES = { dark: 'dunkelblau', light: 'weiss' }; // Einstellungen bis v0.4.0
 
 const raceQueries = ['(prefers-reduced-transparency: reduce)', '(prefers-contrast: more)'].map((q) => matchMedia(q));
 const darkQuery = matchMedia('(prefers-color-scheme: dark)');
 const listeners = new Set();
-
-// --- Design --------------------------------------------------------------------
-
-export function getTheme() {
-  const id = store.settings.get('theme', DEFAULT_THEME);
-  return THEMES.some((t) => t.id === id) ? id : DEFAULT_THEME;
-}
-
-export function setTheme(id) {
-  if (THEMES.some((t) => t.id === id)) store.settings.set('theme', id);
-}
 
 // --- Farbmodus -------------------------------------------------------------------
 
@@ -98,6 +75,33 @@ export function isRaceModeActive() {
   return isRaceModeSwitchOn() || systemForcesRaceMode();
 }
 
+// --- Statusleiste: alte Installation erkennen -----------------------------------
+//
+// Bis v0.5.0 lief die App unter der Statusleiste durch ("black-translucent").
+// Ab iOS 26 legt iOS dann eine Unschärfe über den oberen Rand. iOS übernimmt
+// die neue Einstellung nur beim Hinzufügen zum Home-Bildschirm: Zeichnet die
+// installierte App hochkant noch unter die Statusleiste (oberer
+// Sicherheitsabstand > 0), muss sie einmal neu hinzugefügt werden.
+
+export function isStandalone() {
+  return navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
+}
+
+export function needsReinstall() {
+  if (!isStandalone() || window.innerWidth > window.innerHeight) return false;
+  if (store.settings.get('reinstallHintHidden', false) === true) return false;
+  const probe = document.createElement('div');
+  probe.className = 'safe-probe';
+  document.body.append(probe);
+  const top = probe.getBoundingClientRect().height;
+  probe.remove();
+  return top > 0;
+}
+
+export function hideReinstallHint() {
+  store.settings.set('reinstallHintHidden', true);
+}
+
 // --- Anwenden ----------------------------------------------------------------------
 
 export function onDisplayChange(cb) {
@@ -108,11 +112,10 @@ export function onDisplayChange(cb) {
 function apply() {
   const root = document.documentElement;
   const mode = getEffectiveMode();
-  root.setAttribute('data-theme', getTheme());
   root.setAttribute('data-mode', mode);
   root.setAttribute('data-scheme', schemeOf(mode));
   root.setAttribute('data-glass', isRaceModeActive() ? 'off' : 'on');
-  // Browser-/Systemfarbe = Hintergrund des aktiven Farbmodus (aus css/tokens.css)
+  // Statusleiste und Browser-Farbe = Hintergrund des Farbmodus (aus css/tokens.css)
   const base = getComputedStyle(root).getPropertyValue('--bg-base').trim();
   if (base) document.querySelector('meta[name="theme-color"]')?.setAttribute('content', base);
   for (const cb of listeners) cb();
@@ -121,5 +124,5 @@ function apply() {
 export function initDisplay() {
   apply();
   for (const q of [...raceQueries, darkQuery]) q.addEventListener?.('change', apply);
-  for (const key of ['theme', 'colorMode', 'raceMode']) store.settings.onChange(key, apply);
+  for (const key of ['colorMode', 'raceMode']) store.settings.onChange(key, apply);
 }

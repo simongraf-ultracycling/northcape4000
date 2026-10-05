@@ -1,29 +1,25 @@
 /* ==========================================================================
    Zentrale Design-Variablen
    Design-Änderungen NUR hier. css/app.css verwendet ausschliesslich diese
-   Variablen für Farben, Radien, Schatten, Schriften und Formen.
+   Variablen für Farben, Radien, Schatten und Schriften.
 
-   Zwei unabhängige Einstellungen (Mehr → Darstellung):
-   - Farbmodus  [data-mode]   neutrale Flächen und Schrift: Weiss, Hellgrau,
-                              Dunkelgrau, Dunkelblau, Schwarz (keine Verläufe)
-                [data-scheme] hell/dunkel – folgt aus dem Farbmodus
-   - Design     [data-theme]  Schrift, Knopf-Stil, Symbole, Karten, Tabs,
-                              Akzentfarbe – ruhige Varianten derselben
-                              schlichten, runden Form
+   Ein Design (schlicht, rund, wie iOS) in fünf neutralen Farbmodi
+   (Mehr → Darstellung):
+   - [data-mode]    Weiss, Hellgrau, Dunkelgrau, Dunkelblau, Schwarz
+                    (flach, keine Verläufe)
+   - [data-scheme]  hell/dunkel – folgt aus dem Farbmodus
+   - [data-glass]   "off" = Renn-Modus
 
    Aufbau
-   1. Grundwerte (:root)            Grössen, Abstände, Schriftgrössen
-   2. Schema hell/dunkel            Statusfarben, Schatten, Akzent je Schema
-   3. Farbmodi                      [data-mode="…"]
-   4. Design-Grundwerte             [data-theme]  (= Design "Klar")
-   5. Designs                       [data-theme="…"]
-   6. Renn-Modus                    [data-glass="off"]
-   7. Sim-Modus
+   1. Grundwerte (:root)        Grössen, Abstände, Schriften, Formen
+   2. Schema hell/dunkel        Akzent, Statusfarben, Schatten
+   3. Farbmodi                  [data-mode="…"]
+   4. Renn-Modus                [data-glass="off"]
+   5. Sim-Modus
 
    Die Attribute setzt js/boot.js (vor dem ersten Bild) und js/ui/display.js.
-   Neues Design: Block hier + THEMES in js/ui/display.js + Liste in js/boot.js.
-   Neuer Farbmodus: Block hier + MODES in js/ui/display.js + Liste in js/boot.js.
-   (node tools/check.mjs prüft das.)
+   Neuer Farbmodus: Block hier + MODES in js/ui/display.js + Liste in js/boot.js
+   (node tools/check.mjs prüft das).
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
@@ -31,12 +27,16 @@
    -------------------------------------------------------------------------- */
 
 :root {
+  --font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", system-ui, sans-serif;
   --font-size: 17px; /* Grundgrösse; Eingabefelder nie unter 16px (sonst zoomt iOS) */
   --font-size-small: 15px;
   --font-size-tiny: 13px;
   --font-size-large: 20px;
   --font-size-title: 26px;
   --font-size-hero: 32px;
+  --font-weight-strong: 600;
+  --font-weight-title: 700;
+  --title-tracking: -0.01em;
   --line-height: 1.4;
 
   --tap-min: 56px; /* Mindestgrösse Tippflächen (mit Handschuhen bedienbar) */
@@ -48,7 +48,11 @@
   --header-height: 56px;
   --tabbar-height: 64px;
   --sim-bar-height: 0px;
-  --radius-pill: 999px;
+
+  --radius-pill: 999px; /* Knöpfe, Felder, Tabs, Pillen */
+  --radius-card: 24px;
+  --radius-inner: 14px;
+  --card-border: transparent; /* Karten ohne Rand (Renn-Modus: mit) */
 
   /* Eckradius des Bildschirms (js/boot.js setzt ihn je nach iPhone-Modell).
      Die Tab-Leiste liegt konzentrisch dazu: Abstand zum Rand = Radius − halbe Höhe. */
@@ -57,19 +61,17 @@
 }
 
 /* --------------------------------------------------------------------------
-   2. Schema hell/dunkel
-   Akzent: jedes Design liefert --accent-l/-d (hell/dunkel) und die Schrift
-   darauf --on-accent-l/-d; hier wird die passende Variante gewählt.
+   2. Schema hell/dunkel (:root = Rückfall dunkel)
    -------------------------------------------------------------------------- */
 
 :root,
 [data-scheme="dark"] {
   color-scheme: dark;
-  --accent: var(--accent-d);
-  --accent-fill: var(--accent-d);
-  --text-on-accent: var(--on-accent-d);
-  --accent-soft: color-mix(in srgb, var(--accent-d) 20%, transparent);
-  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--accent-d) 60%, transparent);
+  --accent: #0a84ff;
+  --accent-fill: #0a84ff;
+  --text-on-accent: #ffffff;
+  --accent-soft: rgba(10, 132, 255, 0.20);
+  --focus-ring: 0 0 0 3px rgba(10, 132, 255, 0.6);
   --ok: #30d158;
   --warn: #ffd60a;
   --danger: #ff6961;
@@ -79,22 +81,19 @@
   --sim-text: #ffb340; /* Sim-Hinweise als Text */
   --text-on-sim: #1d1000;
   --offline: #a1a1aa;
+  --switch-on: #30d158;
   --switch-knob: #ffffff;
   --switch-knob-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
-  --shadow: 0 10px 28px rgba(0, 0, 0, 0.42), 0 2px 6px rgba(0, 0, 0, 0.28);
-  --shadow-soft: 0 3px 12px rgba(0, 0, 0, 0.28);
-  --edge: rgba(255, 255, 255, 0.14); /* feine Lichtkante oben (Design Glas) */
-  --sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0) 60%);
-  --statusbar-scrim: none; /* Abdunklung hinter der iOS-Statusleiste */
+  --shadow: 0 10px 28px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.32);
 }
 
 [data-scheme="light"] {
   color-scheme: light;
-  --accent: var(--accent-l);
-  --accent-fill: var(--accent-l);
-  --text-on-accent: var(--on-accent-l);
-  --accent-soft: color-mix(in srgb, var(--accent-l) 13%, transparent);
-  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--accent-l) 45%, transparent);
+  --accent: #007aff;
+  --accent-fill: #007aff;
+  --text-on-accent: #ffffff;
+  --accent-soft: rgba(0, 122, 255, 0.13);
+  --focus-ring: 0 0 0 3px rgba(0, 122, 255, 0.45);
   --ok: #1f8a3e;
   --warn: #9a6200;
   --danger: #c62828;
@@ -104,21 +103,17 @@
   --sim-text: #b45309;
   --text-on-sim: #1d1000;
   --offline: #63636b;
+  --switch-on: #34c759;
   --switch-knob: #ffffff;
   --switch-knob-shadow: 0 2px 6px rgba(0, 0, 0, 0.22);
-  --shadow: 0 8px 24px rgba(20, 20, 40, 0.10), 0 1px 4px rgba(20, 20, 40, 0.06);
-  --shadow-soft: 0 2px 10px rgba(20, 20, 40, 0.07);
-  --edge: rgba(255, 255, 255, 0.9);
-  --sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 60%);
-  /* iOS zeigt die Statusleiste (Uhr, Akku) weiss → bei hellen Modi leicht abdunkeln */
-  --statusbar-scrim: linear-gradient(180deg, rgba(0, 0, 0, 0.40) 0%, rgba(0, 0, 0, 0.22) 70%, rgba(0, 0, 0, 0) 100%);
+  --shadow: 0 8px 26px rgba(20, 20, 40, 0.16), 0 1px 4px rgba(20, 20, 40, 0.08);
 }
 
 /* --------------------------------------------------------------------------
-   3. Farbmodi – neutral, flach (keine Verläufe), :root = Standard Dunkelblau
-   bg-base     Hintergrund (auch Kopf- und Fussbereich)
-   surface     Karten und Listen        surface-2  Knöpfe, Zweitflächen
-   surface-bar Tab-Leiste, Pillen oben, Banner
+   3. Farbmodi – neutral, flach; :root = Standard Dunkelblau
+   bg-base     Hintergrund, Kopfbereich und Statusleiste (theme-color)
+   surface     Karten und Listen        surface-2  Knöpfe, Pillen
+   surface-bar Tab-Leiste, Pillen oben, Banner (deckend)
    -------------------------------------------------------------------------- */
 
 :root,
@@ -126,7 +121,7 @@
   --bg-base: #0b1324;
   --surface: #15203a;
   --surface-2: #1f2c4a;
-  --surface-bar: #18243f;
+  --surface-bar: #1a2642;
   --text: #f1f5fc;
   --text-muted: rgba(214, 224, 244, 0.68);
   --separator: rgba(160, 185, 240, 0.14);
@@ -141,7 +136,7 @@
   --bg-base: #ffffff;
   --surface: #f2f2f7;
   --surface-2: #e5e5eb;
-  --surface-bar: #f4f4f8;
+  --surface-bar: #f7f7fa;
   --text: #0a0a0c;
   --text-muted: #63636b;
   --separator: rgba(60, 60, 67, 0.14);
@@ -198,366 +193,35 @@
 }
 
 /* --------------------------------------------------------------------------
-   4. Design-Grundwerte (gelten, solange ein Design nichts anderes sagt)
-   Alle Designs: schlicht, rund, Knöpfe und Tabs als Pillen.
-   -------------------------------------------------------------------------- */
-
-:root,
-[data-theme] {
-  /* Schrift */
-  --font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", system-ui, sans-serif;
-  --font-display: var(--font-family); /* Titel */
-  --font-numeric: var(--font-family); /* Werte, Anzeigen */
-  --font-weight-title: 700;
-  --font-weight-strong: 600;
-  --title-tracking: -0.01em;
-
-  /* Abschnitts-Überschriften */
-  --section-font: var(--font-family);
-  --section-size: var(--font-size-small);
-  --section-weight: 600;
-  --section-transform: uppercase;
-  --section-tracking: 0.06em;
-  --section-style: normal;
-  --section-color: var(--text-muted);
-
-  /* Karten und Listen */
-  --radius-card: 24px;
-  --radius-inner: 14px;
-  --card-fill: var(--surface);
-  --card-sheen: none;
-  --card-border: transparent;
-  --card-shadow: none;
-
-  /* Symbole: Strich und Plättchen (Zeilen-Symbole) */
-  --icon-stroke: 2;
-  --icon-cap: round;
-  --icon-join: round;
-  --badge-size: 30px;
-  --badge-pad: 0px;
-  --badge-bg: transparent;
-  --badge-color: var(--accent);
-  --badge-border: 0 solid transparent;
-  --badge-radius: 0;
-
-  /* Knöpfe (immer Pillen) */
-  --btn-bg: var(--surface-2);
-  --btn-text: var(--text);
-  --btn-border: transparent;
-  --btn-border-width: 1px;
-  --btn-shadow: none;
-  --btn-weight: 600;
-  --btn-primary-bg: var(--accent-fill);
-  --btn-primary-text: var(--text-on-accent);
-  --btn-primary-border: transparent;
-
-  /* Tab-Leiste und Pillen oben */
-  --bar-fill: var(--surface-bar);
-  --bar-sheen: none;
-  --bar-border: var(--separator);
-  --bar-shadow: var(--shadow);
-  --chip-shadow: var(--shadow-soft);
-  --tab-text: var(--text-muted);
-  --tab-active-bg: var(--accent-soft);
-  --tab-active-text: var(--accent);
-  --tab-active-border: transparent;
-  --tab-active-shadow: none;
-  --tab-active-weight: 600;
-
-  --switch-on: var(--ok);
-
-  /* Akzent (hell / dunkel) */
-  --accent-l: #007aff;
-  --accent-d: #0a84ff;
-  --on-accent-l: #ffffff;
-  --on-accent-d: #ffffff;
-}
-
-/* --------------------------------------------------------------------------
-   5. Designs
-   -------------------------------------------------------------------------- */
-
-/* === 5.1 Klar – wie iOS: SF Pro, gefüllte Knöpfe, schlichte Symbole ====== */
-
-[data-theme="klar"] {
-  --accent-l: #007aff;
-  --accent-d: #0a84ff;
-  --on-accent-l: #ffffff;
-  --on-accent-d: #ffffff;
-}
-
-/* === 5.2 Rund – runde Schrift, Symbole in Kreisen, getönte Knöpfe ======== */
-
-[data-theme="rund"] {
-  --font-family: ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  --section-transform: none;
-  --section-tracking: 0;
-  --section-size: var(--font-size);
-  --section-weight: 700;
-  --section-color: var(--text);
-  --radius-card: 30px;
-  --radius-inner: 18px;
-  --icon-stroke: 2.2;
-  --badge-size: 36px;
-  --badge-pad: 7px;
-  --badge-bg: var(--accent-soft);
-  --badge-radius: 50%;
-  --btn-primary-bg: var(--accent-soft);
-  --btn-primary-text: var(--accent);
-  --tab-active-bg: var(--accent-fill);
-  --tab-active-text: var(--text-on-accent);
-  --accent-l: #087a6f;
-  --accent-d: #3fd0bd;
-  --on-accent-l: #ffffff;
-  --on-accent-d: #00261f;
-}
-
-/* === 5.3 Fein – leichte Schrift, feine Linien, umrandete Flächen ========= */
-
-[data-theme="fein"] {
-  --font-weight-title: 300;
-  --font-weight-strong: 500;
-  --title-tracking: 0;
-  --section-transform: none;
-  --section-tracking: 0.01em;
-  --section-weight: 400;
-  --radius-card: 22px;
-  --card-fill: transparent;
-  --card-border: var(--separator-strong);
-  --icon-stroke: 1.5;
-  --btn-bg: transparent;
-  --btn-border: var(--separator-strong);
-  --btn-border-width: 1.5px;
-  --btn-weight: 500;
-  --btn-primary-bg: transparent;
-  --btn-primary-text: var(--accent);
-  --btn-primary-border: var(--accent);
-  --bar-fill: var(--bg-base);
-  --bar-border: var(--separator-strong);
-  --bar-shadow: none;
-  --chip-shadow: none;
-  --tab-active-bg: transparent;
-  --tab-active-border: var(--accent);
-  --tab-active-weight: 500;
-  --accent-l: #4650c8;
-  --accent-d: #9aa3ff;
-  --on-accent-l: #ffffff;
-  --on-accent-d: #0b0f3a;
-}
-
-/* === 5.4 Kräftig – fette Schrift, kräftige Symbole auf Farbplättchen ===== */
-
-[data-theme="kraeftig"] {
-  --font-weight-title: 800;
-  --font-weight-strong: 700;
-  --title-tracking: -0.02em;
-  --section-weight: 800;
-  --section-color: var(--text);
-  --radius-card: 26px;
-  --icon-stroke: 2.6;
-  --badge-size: 36px;
-  --badge-pad: 7px;
-  --badge-bg: var(--accent-fill);
-  --badge-color: var(--text-on-accent);
-  --badge-radius: 11px;
-  --btn-weight: 800;
-  --tab-active-bg: var(--accent-fill);
-  --tab-active-text: var(--text-on-accent);
-  --tab-active-weight: 800;
-  --accent-l: #c2410c;
-  --accent-d: #ff8a3d;
-  --on-accent-l: #ffffff;
-  --on-accent-d: #2a1000;
-}
-
-/* === 5.5 Klassik – Serifen-Titel (New York), schlanke Symbole =========== */
-
-[data-theme="klassik"] {
-  --font-display: ui-serif, "New York", Georgia, "Times New Roman", serif;
-  --font-weight-title: 600;
-  --title-tracking: 0;
-  --section-font: var(--font-display);
-  --section-size: var(--font-size);
-  --section-weight: 400;
-  --section-transform: none;
-  --section-tracking: 0;
-  --section-style: italic;
-  --radius-card: 20px;
-  --icon-stroke: 1.75;
-  --btn-bg: transparent;
-  --btn-border: var(--separator-strong);
-  --btn-primary-bg: var(--text);
-  --btn-primary-text: var(--bg-base);
-  --tab-active-bg: var(--text);
-  --tab-active-text: var(--bg-base);
-  --accent-l: #8a5a2b;
-  --accent-d: #d9ad7c;
-  --on-accent-l: #ffffff;
-  --on-accent-d: #2a1a08;
-}
-
-/* === 5.6 Technik – Monospace, eckige Linienenden, Akzent Grün =========== */
-
-[data-theme="technik"] {
-  --font-display: ui-monospace, "SF Mono", Menlo, monospace;
-  --font-numeric: ui-monospace, "SF Mono", Menlo, monospace;
-  --font-weight-title: 600;
-  --title-tracking: -0.03em;
-  --section-font: var(--font-numeric);
-  --section-size: var(--font-size-tiny);
-  --section-tracking: 0.08em;
-  --radius-card: 16px;
-  --radius-inner: 10px;
-  --icon-stroke: 1.8;
-  --icon-cap: square;
-  --icon-join: miter;
-  --badge-size: 34px;
-  --badge-pad: 6px;
-  --badge-border: 1.5px solid var(--separator-strong);
-  --badge-radius: 10px;
-  --tab-active-bg: var(--surface-2);
-  --switch-on: var(--accent-fill);
-  --accent-l: #1a7f37;
-  --accent-d: #3ddc6a;
-  --on-accent-l: #ffffff;
-  --on-accent-d: #00290d;
-}
-
-/* === 5.7 Avenir – Avenir Next, Symbole in Ringen, getönte Zweitknöpfe === */
-
-[data-theme="avenir"] {
-  --font-family: "Avenir Next", Avenir, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  --font-weight-title: 600;
-  --title-tracking: 0;
-  --section-transform: none;
-  --section-tracking: 0.02em;
-  --radius-card: 26px;
-  --icon-stroke: 1.9;
-  --badge-size: 36px;
-  --badge-pad: 7px;
-  --badge-border: 1.5px solid var(--accent);
-  --badge-radius: 50%;
-  --btn-bg: var(--accent-soft);
-  --btn-text: var(--accent);
-  --accent-l: #5246e8;
-  --accent-d: #9a94ff;
-  --on-accent-l: #ffffff;
-  --on-accent-d: #120d3d;
-}
-
-/* === 5.8 Helvetica – schwarz-weiss, eckige Linienenden ================== */
-
-[data-theme="helvetica"] {
-  --font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  --font-weight-title: 700;
-  --font-weight-strong: 500;
-  --title-tracking: -0.025em;
-  --section-weight: 700;
-  --section-tracking: 0.04em;
-  --section-color: var(--text);
-  --radius-card: 18px;
-  --icon-stroke: 2.2;
-  --icon-cap: square;
-  --icon-join: miter;
-  --btn-weight: 500;
-  --tab-active-bg: var(--accent-fill);
-  --tab-active-text: var(--text-on-accent);
-  --accent-l: #111114;
-  --accent-d: #f5f5f7;
-  --on-accent-l: #ffffff;
-  --on-accent-d: #111114;
-}
-
-/* === 5.9 Glas – Liquid Glass: durchscheinend, Lichtkante, Schatten ====== */
-
-[data-theme="glas"] {
-  --radius-card: 30px;
-  --card-fill: color-mix(in srgb, var(--surface) 62%, transparent);
-  --card-sheen: var(--sheen);
-  --card-border: var(--separator-strong);
-  --card-shadow: inset 0 1px 0 var(--edge), var(--shadow);
-  --badge-size: 36px;
-  --badge-pad: 7px;
-  --badge-bg: var(--sheen), var(--surface-2);
-  --badge-border: 1px solid var(--separator);
-  --badge-radius: 12px;
-  --btn-bg: var(--sheen), color-mix(in srgb, var(--surface-2) 70%, transparent);
-  --btn-border: var(--separator-strong);
-  --btn-shadow: inset 0 1px 0 var(--edge), var(--shadow-soft);
-  --btn-primary-bg: var(--sheen), var(--accent-fill);
-  --bar-fill: color-mix(in srgb, var(--surface-bar) 82%, transparent);
-  --bar-sheen: var(--sheen);
-  --tab-active-bg: var(--surface-2);
-  --tab-active-shadow: inset 0 1px 0 var(--edge);
-  --accent-l: #0a7ea4;
-  --accent-d: #64d2ff;
-  --on-accent-l: #ffffff;
-  --on-accent-d: #002331;
-}
-
-/* === 5.10 Geometrisch – Futura-Titel, Symbole in Farbkreisen ============ */
-
-[data-theme="geometrisch"] {
-  --font-display: Futura, "Avenir Next", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  --font-weight-title: 500;
-  --title-tracking: 0.01em;
-  --section-font: var(--font-display);
-  --section-weight: 500;
-  --section-tracking: 0.12em;
-  --icon-stroke: 2;
-  --badge-size: 36px;
-  --badge-pad: 8px;
-  --badge-bg: var(--accent-fill);
-  --badge-color: var(--text-on-accent);
-  --badge-radius: 50%;
-  --tab-active-bg: transparent;
-  --tab-active-weight: 700;
-  --accent-l: #c2185b;
-  --accent-d: #ff6fa8;
-  --on-accent-l: #ffffff;
-  --on-accent-d: #33061a;
-}
-
-/* --------------------------------------------------------------------------
-   6. Renn-Modus (Glas reduzieren): deckende Flächen, klare Ränder, keine
-   Schatten, Schrift mit maximalem Kontrast – besser im Sonnenlicht. Gilt für
-   jedes Design und jeden Farbmodus (Schrift, Formen, Akzent bleiben).
+   4. Renn-Modus (Glas reduzieren): klare Ränder, keine Schatten, Schrift mit
+   maximalem Kontrast – besser im Sonnenlicht. Farbmodus und Formen bleiben.
    Schalter unter Mehr → Darstellung, automatisch bei "Transparenz reduzieren"
    bzw. "Kontrast erhöhen" (js/ui/display.js).
    -------------------------------------------------------------------------- */
 
 :root[data-glass="off"] {
-  --card-fill: var(--surface);
-  --card-sheen: none;
-  --card-shadow: none;
-  --card-border: var(--separator-strong);
-  --bar-fill: var(--surface-bar);
-  --bar-sheen: none;
-  --bar-shadow: none;
-  --bar-border: var(--separator-strong);
-  --chip-shadow: none;
-  --btn-shadow: none;
-  --tab-active-shadow: none;
   --shadow: none;
-  --shadow-soft: none;
+  --card-border: var(--separator-strong);
 }
 
 :root[data-glass="off"][data-scheme="dark"] {
   --text: #ffffff;
   --text-muted: rgba(255, 255, 255, 0.86);
-  --separator-strong: rgba(255, 255, 255, 0.5);
+  --separator: rgba(255, 255, 255, 0.3);
+  --separator-strong: rgba(255, 255, 255, 0.55);
   --field-border: rgba(255, 255, 255, 0.6);
 }
 
 :root[data-glass="off"][data-scheme="light"] {
   --text: #000000;
   --text-muted: rgba(0, 0, 0, 0.8);
-  --separator-strong: rgba(0, 0, 0, 0.5);
+  --separator: rgba(0, 0, 0, 0.28);
+  --separator-strong: rgba(0, 0, 0, 0.55);
   --field-border: rgba(0, 0, 0, 0.6);
 }
 
 /* --------------------------------------------------------------------------
-   7. Sim-Modus: orange Leiste oben (siehe .sim-bar in app.css)
+   5. Sim-Modus: orange Leiste oben (siehe .sim-bar in app.css)
    -------------------------------------------------------------------------- */
 
 :root.sim {
