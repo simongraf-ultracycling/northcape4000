@@ -13,7 +13,12 @@ Projektgrundlage, Architektur und feste Regeln: [CLAUDE.md](CLAUDE.md) ·
 ### 1. GitHub Pages
 
 GitHub → Repository → **Settings → Pages** → *Build and deployment*:
-Source **Deploy from a branch**, Branch **main**, Ordner **/ (root)** → *Save*.
+Source **GitHub Actions** wählen (wird sofort gespeichert).
+
+Veröffentlicht wird danach automatisch bei jedem Push auf `main` durch den Ablauf
+[`.github/workflows/pages.yml`](.github/workflows/pages.yml): Er prüft zuerst die festen
+Regeln (`node tools/check.mjs`) – bei Fehlern wird nicht veröffentlicht – und stellt dann
+nur die App-Dateien online. Manuell starten: **Actions → Veröffentlichen → Run workflow**.
 Nach 1–2 Minuten ist die App unter der Adresse oben erreichbar.
 
 ### 2. Firebase Authentication
@@ -71,7 +76,8 @@ evtl. trotzdem als "Secret" – das ist erwartet). Zusätzlicher Schutz:
 
 1. Änderungen machen, `VERSION` in `js/version.js` erhöhen, `CHANGELOG.md` nachführen.
 2. `node tools/check.mjs` ausführen (muss "✓ Alles in Ordnung" melden).
-3. Committen und auf `main` bringen. GitHub Pages veröffentlicht automatisch.
+3. Committen und auf `main` bringen. Der Ablauf "Veröffentlichen" prüft und veröffentlicht
+   automatisch (Actions → Veröffentlichen).
 4. In der App erscheint (beim nächsten Öffnen bzw. spätestens nach 30 Minuten) das Banner
    **"Neue Version – tippen zum Laden"**. Sofort prüfen: Mehr → Debug → "Nach Update suchen".
 
@@ -81,12 +87,13 @@ evtl. trotzdem als "Secret" – das ist erwartet). Zusätzlicher Schutz:
 tippen. Steht dort "Aktuell (Server: v…)" mit der alten Nummer, ist die neue Version noch
 nicht veröffentlicht (siehe nächster Punkt).
 
-**Veröffentlichung hängt.** GitHub → Repository → **Actions** → "pages build and
-deployment" → obersten Lauf öffnen. Steht er lange auf "Queued": "Cancel workflow", dann
-"Re-run all jobs". Hilft das nicht, löst jeder neue Commit auf `main` einen neuen Lauf aus
-(z.B. diese Datei auf github.com bearbeiten und speichern). Bleibt auch der neue Lauf
-hängen, hat GitHub eine Störung: [githubstatus.com](https://www.githubstatus.com)
-("Actions", "Pages") – dann hilft nur warten.
+**Veröffentlichung hängt oder schlägt fehl.** GitHub → Repository → **Actions** →
+"Veröffentlichen" → obersten Lauf öffnen. Rot bei "Prüfen": `tools/check.mjs` hat einen
+Regelverstoss gefunden (Details im Protokoll). Lange "Queued": "Cancel workflow", dann
+oben rechts **Run workflow**. Bleibt auch der neue Lauf hängen, hat GitHub eine Störung:
+[githubstatus.com](https://www.githubstatus.com) ("Actions", "Pages") – dann hilft nur
+warten. (Läufe, die länger als 24 Stunden in der Warteschlange stehen, bricht GitHub
+selbst ab.)
 
 **App startet nicht mehr.** Nach 15 Sekunden erscheint eine Notfall-Anzeige mit
 "Cache leeren und neu laden" (braucht Netz). Erfasste Daten bleiben erhalten.

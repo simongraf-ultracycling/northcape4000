@@ -1,0 +1,56 @@
+# Veröffentlichung auf GitHub Pages.
+# Läuft bei jedem Push auf main (und manuell über "Run workflow"):
+#   1. Feste Regeln prüfen (node tools/check.mjs) – bei Fehlern wird NICHT veröffentlicht.
+#   2. Nur die App-Dateien zusammenstellen (kein Build, nichts wird verändert).
+#   3. Auf GitHub Pages veröffentlichen.
+# Voraussetzung: Settings → Pages → Source "GitHub Actions" (siehe README.md).
+
+name: Veröffentlichen
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Eigene Gruppe, unabhängig vom GitHub-Standardablauf "pages build and deployment".
+# Neuere Läufe warten, bis ein laufender fertig ist (keine halben Veröffentlichungen).
+concurrency:
+  group: northcape-pages
+  cancel-in-progress: false
+
+jobs:
+  pruefen:
+    name: Prüfen und zusammenstellen
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Feste Regeln prüfen
+        run: node tools/check.mjs
+
+      - name: App-Dateien zusammenstellen
+        run: |
+          mkdir -p _site
+          cp -R index.html manifest.webmanifest sw.js css js icons _site/
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  veroeffentlichen:
+    name: Veröffentlichen
+    needs: pruefen
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
