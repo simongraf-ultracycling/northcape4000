@@ -165,6 +165,9 @@ tools/make_icons.py     Icons einmalig erzeugen (nur Python-Standardbibliothek)
 
 ### Praktische Ergänzungen
 
+- **Arbeitsweise (Wunsch von Simon):** Fertige Änderungen immer direkt als Pull Request
+  auf `main` bringen und sofort mergen – nicht nachfragen. GitHub Pages veröffentlicht
+  danach automatisch; die App zeigt das Update-Banner.
 - Ausnahmen der Datenregel: `js/clock.js` und `js/log.js` nutzen den Geräte-Speicher
   (`js/local.js`) direkt (vermeidet Import-Zyklen); `js/boot.js` liest dieselben Schlüssel.
 - Neue App-Dateien in `APP_FILES` von `sw.js` eintragen; neue externe Quellen (CDN,
