@@ -7,7 +7,8 @@
 //
 // Datenstruktur in Firestore:
 //   races/{raceId}                 Renn-Dokument (öffentlich per get)
-//   races/{raceId}/events/{id}     Ereignisse (Status, Befinden, …)
+//   races/{raceId}/events/{id}     Ereignisse: type 'status' (data.state, data.from),
+//                                  'befinden' (data.muedigkeit/sitz/mental/motivation), …
 //   races/{raceId}/config/{key}    Renn-Konfiguration (Gates, Zeitfenster, …)
 //   races/{raceId}/debug/{id}      Test-Einträge aus dem Debug-Bereich
 //   races/{raceId}/private/{key}   NUR Besitzer: offizielle Route, eigene POIs
@@ -18,6 +19,10 @@
 //   tzOffset    Zeitzone des Handys in Minuten (z.B. 120 für MESZ)
 //   appVersion  App-Version, die den Eintrag geschrieben hat
 //   serverTime  vom Server gesetzt (ms), nur Info; null solange nicht synchronisiert
+//
+// Korrekturen (updateEvent) ergänzen ein Dokument: editedTime, editedVersion;
+// geänderte Zeit: originalClientTime; gelöscht: voided: true (bleibt erhalten,
+// zählt aber nirgends mehr).
 //
 // Schreibvorgänge geben sofort { id, local, server } zurück:
 //   local   Promise: lokal gespeichert (übersteht App-Neustart, auch offline)
@@ -166,7 +171,17 @@ export function newId() {
 }
 
 function write(segments, fields, label) {
-  const result = requireBackend().write(segments, { ...fields, ...meta() });
+  return track(requireBackend().write(segments, { ...fields, ...meta() }), segments, label);
+}
+
+// Bestehendes Dokument ergänzen (Felder werden zusammengeführt)
+function update(segments, fields, label) {
+  const edited = { editedTime: clock.now(), editedVersion: VERSION };
+  return track(requireBackend().update(segments, { ...fields, ...edited }), segments, label);
+}
+
+// Ausstehende Bestätigungen zählen, Fehler protokollieren
+function track(result, segments, label) {
   patchStatus({ pendingSession: status.pendingSession + 1 });
   const done = () => patchStatus({ pendingSession: Math.max(0, status.pendingSession - 1) });
   result.server.then(done, (err) => {
@@ -197,6 +212,12 @@ function watchList(segments, options, cb) {
 export function addEvent(type, data = {}) {
   if (!type) throw new Error('addEvent: type fehlt');
   return write(['events', newId()], { type, data, source: 'app' }, `Ereignis "${type}"`);
+}
+
+// Ereignis korrigieren, z.B. { clientTime, originalClientTime } oder { voided: true }
+export function updateEvent(id, fields) {
+  if (!id) throw new Error('updateEvent: id fehlt');
+  return update(['events', id], fields, 'Korrektur');
 }
 
 // cb(events, { fromCache }) – neueste zuerst. Gibt eine Abmelde-Funktion zurück.

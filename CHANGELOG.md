@@ -4,6 +4,30 @@ Alle Änderungen an der App. Format angelehnt an [Keep a Changelog](https://keep
 Versionen nach [SemVer](https://semver.org/lang/de/). Die Versionsnummer steht ausschliesslich in
 `js/version.js` und wird bei jeder Änderung erhöht.
 
+## [0.7.0] – 2026-10-06
+
+Etappe 2: Status-Automat und Befinden.
+
+### Neu
+
+- **Status-Tab:** aktueller Status gross mit Symbol, Farbe und Dauer ("seit 14:32 ·
+  1 h 23 min"). Zustände: Fahren, Pause, Versorgung, Hotel, Schlafen, Wach.
+- **Grosse Knöpfe für die nächsten Schritte** (mit Handschuhen bedienbar), der
+  wahrscheinlichste zuerst – z.B. beim Fahren "Pause", "Versorgung", "Hotel",
+  "Schlafen"; nach dem Aufwachen "Losgefahren". Alle übrigen Zustände unter
+  "Anderer Status …". Doppeltipp-Schutz und 8 Sekunden "Rückgängig" per Banner.
+- **Heute:** Fahrzeit, Pausen und Schlaf seit Mitternacht.
+- **Befinden:** vier Regler 0–10 – Müdigkeit, Sitzprobleme, Mental, Motivation –
+  mit Farbe (gut/mittel/schlecht) und "Befinden speichern".
+- **Verlauf** der Statuswechsel und Befinden-Einträge mit Dauer; antippen zum
+  Korrigieren: Zeitpunkt ändern oder Eintrag löschen (zweistufig).
+- Alles offline-fähig: Einträge sind sofort gespeichert und werden nachgeliefert;
+  noch nicht synchronisierte zeigen ⇅.
+- Datenschicht: `store.updateEvent(id, felder)` für Korrekturen (Felder werden
+  ergänzt; gelöschte Einträge bleiben mit `voided: true` erhalten).
+- Fachlogik in `js/model/status.js` und `js/model/befinden.js` (auch für Statistik und
+  Follower-Seite); Sim-Testdaten mit rund 28 Stunden Verlauf.
+
 ## [0.6.0] – 2026-10-06
 
 ### Geändert
