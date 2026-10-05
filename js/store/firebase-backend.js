@@ -238,6 +238,15 @@ export async function createBackend({ raceId, onConnection, onUser }) {
       return { local, server };
     },
 
+    update(segments, fields) {
+      const ref = docRef(segments);
+      const server = fs.setDoc(ref, fields, { merge: true });
+      const local = fs.getDocFromCache(ref).then((snap) => {
+        if (!snap.exists()) throw new Error('nicht im lokalen Speicher');
+      });
+      return { local, server };
+    },
+
     async read(segments) {
       const ref = docRef(segments);
       let snap;

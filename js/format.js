@@ -49,6 +49,35 @@ export function formatDuration(ms) {
   return h ? `${h} h ${String(m).padStart(2, '0')} min` : `${m} min`;
 }
 
+// Verstrichene Zeit für die Oberfläche: unter einer Minute "< 1 min"
+export function formatElapsed(ms) {
+  if (!Number.isFinite(ms)) return '–';
+  return ms < 60_000 ? '< 1 min' : formatDuration(ms);
+}
+
+// Dauer als Stunden:Minuten, z.B. "6:05 h" (für kompakte Anzeigen)
+export function formatHours(ms) {
+  if (!Number.isFinite(ms)) return '–';
+  const totalMin = Math.max(0, Math.round(ms / 60_000));
+  return `${Math.floor(totalMin / 60)}:${String(totalMin % 60).padStart(2, '0')} h`;
+}
+
+function localMidnight(ms) {
+  const d = new Date(ms);
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+
+// Tag relativ zu "now": "heute", "gestern", Wochentag (bis 6 Tage) oder Datum
+export function formatDay(ms, now) {
+  if (!Number.isFinite(ms)) return '–';
+  const days = Math.round((localMidnight(now) - localMidnight(ms)) / 86_400_000);
+  if (days === 0) return 'heute';
+  if (days === 1) return 'gestern';
+  if (days > 1 && days < 7) return fmtWeekday.format(new Date(ms));
+  return formatDate(ms);
+}
+
 // Wert für <input type="datetime-local"> (Ortszeit des Geräts).
 export function toDateTimeLocalValue(ms) {
   const d = new Date(ms);

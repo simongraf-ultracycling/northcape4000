@@ -57,6 +57,8 @@ js/store.js             Datenschicht – EINZIGE Schnittstelle für Daten
 js/store/firebase-backend.js   Firestore + Auth (nur von store.js benutzt)
 js/store/sim-backend.js        Lokaler Simulator (gleiche Schnittstelle)
 js/store/sim-seed.js           Testdaten für den Sim-Modus
+js/model/status.js      Status-Automat: Zustände, Übergänge, Abschnitte, Tageswerte
+js/model/befinden.js    Befinden: vier Regler 0–10, Bewertung gut/mittel/schlecht
 js/update.js            Service-Worker-Registrierung, Update-Erkennung, Cache leeren
 js/ui/display.js        Farbmodus, Renn-Modus, Statusleiste (setzt data-Attribute)
 js/ui/…                 Oberfläche: dom-Helfer, Symbole, Hülle, Router, Ansichten
@@ -74,7 +76,15 @@ tools/make_icons.py     Icons einmalig erzeugen (nur Python-Standardbibliothek)
   auch nach App-Neustart. Gelesene Dokumente (auch privat) bleiben offline verfügbar.
 - Datenstruktur `races/{raceId}/…`:
   - `races/{raceId}` – Dokument der Tour bzw. des Rennens (öffentlich per get)
-  - `events/{id}` – Ereignisse (`addEvent(type, data)`, `subscribeEvents`)
+  - `events/{id}` – Ereignisse (`addEvent(type, data)`, `subscribeEvents`,
+    Korrektur `updateEvent(id, felder)`):
+    - `type: 'status'`, `data: { state, from }` – Zustände `fahren`, `pause`,
+      `versorgung`, `hotel`, `schlafen`, `wach` (`js/model/status.js`)
+    - `type: 'befinden'`, `data: { muedigkeit, sitz, mental, motivation }` (0–10;
+      Müdigkeit/Sitz: 0 gut, Mental/Motivation: 10 gut)
+    - Korrekturen ergänzen das Dokument (`editedTime`, `editedVersion`); Zeit geändert:
+      `clientTime` neu, `originalClientTime` alt; gelöscht: `voided: true`.
+      **Alle Auswertungen ignorieren `voided` und nehmen `clientTime`.**
   - `config/{key}` – Tour-Konfiguration, Wert im Feld `value` (`getConfig`, `setConfig`, `subscribeConfig`)
   - `debug/{id}` – Test-Einträge aus dem Debug-Bereich
   - `private/{key}` – **nur Besitzer**: offizielle Route (GPX-Daten), eigene POIs (`getPrivate`, `setPrivate`)
@@ -112,7 +122,7 @@ tools/make_icons.py     Icons einmalig erzeugen (nur Python-Standardbibliothek)
 | # | Etappe | Status |
 |---|--------|--------|
 | 1 | Grundgerüst: App-Hülle, Liquid-Glass-Design, Offline/Updates, Datenschicht, Login, Regeln, Sim-Modus, Debug | ✅ erledigt (v0.1.0; v0.4.0: allgemein für Bikepacking; v0.6.0: ein schlichtes Design, fünf neutrale Farbmodi, deckende Statusleiste) |
-| 2 | Status-Automat und Befindens-Regler mit Firebase-Sync | offen |
+| 2 | Status-Automat und Befindens-Regler mit Firebase-Sync | ✅ erledigt (v0.7.0: Status-Tab, Befinden 4 Regler, Verlauf mit Korrektur) |
 | 3 | Karte: Testroute, Import der offiziellen GPX (nur privat!), Echtzeit-Standort, Versorgungspunkte, eigene POIs, Google-Maps-Knopf | offen |
 | 4 | Zeitplan: Kontrollpunkte/Gates, Zeitfenster, Etappen, Fähren-Rechner | offen |
 | 5 | Statistik: Tageswerte, Diagramme | offen |

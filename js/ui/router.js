@@ -7,8 +7,9 @@ import { setHeader } from './shell.js';
 import { displaySettingsView } from './views/display-settings.js';
 import { debugView } from './views/debug.js';
 import { moreView } from './views/more.js';
-import { mapView, planView, statsView, statusView } from './views/placeholders.js';
+import { mapView, planView, statsView } from './views/placeholders.js';
 import { simulationView } from './views/simulation.js';
+import { statusView } from './views/status.js';
 
 const BACK_TO_MORE = { href: '#mehr', label: 'Mehr' };
 

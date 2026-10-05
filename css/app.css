@@ -486,6 +486,12 @@ label.row:active {
   color: var(--text-on-sim);
 }
 
+/* Unauffälliger Text-Knopf (z.B. "Mehr anzeigen") */
+.btn-plain {
+  background: transparent;
+  color: var(--accent);
+}
+
 .btn svg {
   width: 24px;
   height: 24px;
@@ -499,6 +505,265 @@ label.row:active {
 
 .btn-row > .btn {
   flex: 1 1 140px;
+}
+
+/* --- Status (js/ui/views/status.js) --------------------------------------- */
+
+/* Farbe je Zustand: Elemente mit data-state erhalten --state-color */
+[data-state="none"] { --state-color: var(--text-muted); }
+[data-state="fahren"] { --state-color: var(--state-fahren); }
+[data-state="pause"] { --state-color: var(--state-pause); }
+[data-state="versorgung"] { --state-color: var(--state-versorgung); }
+[data-state="hotel"] { --state-color: var(--state-hotel); }
+[data-state="schlafen"] { --state-color: var(--state-schlafen); }
+[data-state="wach"] { --state-color: var(--state-wach); }
+[data-state="befinden"] { --state-color: var(--accent); }
+
+.status-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-m);
+  padding: var(--space-l) var(--space-m);
+}
+
+.status-icon {
+  flex: none;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--state-color) 18%, transparent);
+  color: var(--state-color);
+}
+
+.status-icon svg {
+  width: 34px;
+  height: 34px;
+}
+
+.status-text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.status-name {
+  font-size: var(--font-size-hero);
+  font-weight: var(--font-weight-title);
+  letter-spacing: var(--title-tracking);
+  line-height: 1.1;
+}
+
+.status-since {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.status-sync {
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-strong);
+  color: var(--warn);
+}
+
+.status-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-s);
+}
+
+.status-actions[hidden] {
+  display: none;
+}
+
+.span-2 {
+  grid-column: 1 / -1;
+}
+
+.btn-state {
+  min-height: 64px;
+  padding: 0 var(--space-s);
+}
+
+.btn-state svg {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  color: var(--state-color);
+}
+
+.btn-primary.btn-state {
+  font-size: var(--font-size-large);
+}
+
+.btn-primary.btn-state svg {
+  color: inherit;
+}
+
+/* Tageswerte */
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-s);
+}
+
+.tile {
+  border-radius: var(--radius-card);
+  padding: var(--space-s) var(--space-m);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tile-value {
+  font-size: var(--font-size-large);
+  font-weight: var(--font-weight-title);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.tile-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: var(--font-size-small);
+  color: var(--text-muted);
+}
+
+.tile-label::before {
+  content: "";
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--tile-color);
+}
+
+[data-category="fahren"] { --tile-color: var(--state-fahren); }
+[data-category="pause"] { --tile-color: var(--state-pause); }
+[data-category="schlaf"] { --tile-color: var(--state-schlafen); }
+
+/* Befinden: Regler 0–10 mit grossem Griff (Handschuhe) */
+.mood {
+  display: flex;
+  flex-direction: column;
+}
+
+.mood[data-level="ok"] { --mood-color: var(--ok); }
+.mood[data-level="warn"] { --mood-color: var(--warn); }
+.mood[data-level="danger"] { --mood-color: var(--danger); }
+
+.mood-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-s);
+}
+
+.mood-label {
+  font-weight: var(--font-weight-strong);
+}
+
+.mood-value {
+  font-size: var(--font-size-large);
+  font-weight: var(--font-weight-title);
+  font-variant-numeric: tabular-nums;
+  color: var(--mood-color);
+}
+
+.mood-scale {
+  display: flex;
+  justify-content: space-between;
+  margin-top: -6px;
+  font-size: var(--font-size-tiny);
+  color: var(--text-muted);
+}
+
+.range {
+  --fill: 50%;
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: var(--tap-min);
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.range:focus-visible {
+  box-shadow: none;
+}
+
+.range::-webkit-slider-runnable-track {
+  height: 10px;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(90deg, var(--mood-color) 0 var(--fill), var(--surface-2) var(--fill) 100%);
+}
+
+.range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 40px;
+  height: 40px;
+  margin-top: -15px;
+  border-radius: 50%;
+  background: var(--switch-knob);
+  box-shadow: var(--switch-knob-shadow), 0 0 0 1px var(--separator-strong);
+}
+
+.range:focus-visible::-webkit-slider-thumb {
+  box-shadow: var(--focus-ring);
+}
+
+.range::-moz-range-track {
+  height: 10px;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(90deg, var(--mood-color) 0 var(--fill), var(--surface-2) var(--fill) 100%);
+}
+
+.range::-moz-range-thumb {
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--switch-knob);
+  box-shadow: var(--switch-knob-shadow), 0 0 0 1px var(--separator-strong);
+}
+
+/* Verlauf */
+.history-time {
+  flex: none;
+  min-width: 3.4em;
+  display: flex;
+  flex-direction: column;
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--font-weight-strong);
+}
+
+.history-day {
+  font-size: var(--font-size-tiny);
+  font-weight: normal;
+  color: var(--text-muted);
+}
+
+.history-icon {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  color: var(--state-color);
+}
+
+.history-pending {
+  flex: none;
+  color: var(--warn);
+  font-weight: 700;
+}
+
+.history-editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-s);
+  padding: var(--space-s) var(--space-m) var(--space-m);
 }
 
 /* --- Schalter (gross, ganze Zeile tippbar) ------------------------------------ */

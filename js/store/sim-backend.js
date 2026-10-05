@@ -10,6 +10,7 @@
 //   getUser()                          → { uid, email } | null
 //   signIn(email, password), signOut()
 //   write(segments, fields)            → { local: Promise, server: Promise }
+//   update(segments, fields)           → wie write, Felder werden ergänzt
 //   read(segments)                     → Promise<{ id, exists, data, fromCache, pending }>
 //   watchDoc(segments, cb, onError)    → Abmelde-Funktion; cb(doc)
 //   watchCollection(segments, { orderBy, desc, limit }, cb, onError)
@@ -104,7 +105,7 @@ export async function createBackend({ ownerUid, onConnection, onUser }) {
       const entry = docs[next];
       if (entry?.pending) {
         entry.pending = false;
-        entry.data.serverTime = clock.now();
+        if (entry.data.serverTime == null) entry.data.serverTime = clock.now();
         persist();
         notify(next);
         for (const resolve of serverWaiters.get(next) || []) resolve();
@@ -112,6 +113,19 @@ export async function createBackend({ ownerUid, onConnection, onUser }) {
       }
       scheduleAcks();
     }, delay);
+  }
+
+  // Dokument lokal speichern ("ausstehend"); die Bestätigung folgt verzögert
+  function store(path, data) {
+    docs[path] = { data, pending: true };
+    persist();
+    notify(path);
+    const server = new Promise((resolve) => {
+      if (!serverWaiters.has(path)) serverWaiters.set(path, []);
+      serverWaiters.get(path).push(resolve);
+    });
+    scheduleAcks();
+    return { local: Promise.resolve(), server };
   }
 
   window.addEventListener('online', () => {
@@ -142,16 +156,12 @@ export async function createBackend({ ownerUid, onConnection, onUser }) {
     },
 
     write(segments, fields) {
+      return store(pathOf(segments), { ...copy(fields), serverTime: null });
+    },
+
+    update(segments, fields) {
       const path = pathOf(segments);
-      docs[path] = { data: { ...copy(fields), serverTime: null }, pending: true };
-      persist();
-      notify(path);
-      const server = new Promise((resolve) => {
-        if (!serverWaiters.has(path)) serverWaiters.set(path, []);
-        serverWaiters.get(path).push(resolve);
-      });
-      scheduleAcks();
-      return { local: Promise.resolve(), server };
+      return store(path, { ...(docs[path]?.data || {}), ...copy(fields) });
     },
 
     async read(segments) {
