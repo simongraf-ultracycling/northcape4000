@@ -1,0 +1,43 @@
+rules_version = '2';
+
+// Sicherheitsregeln NorthCape 4000 – in der Firebase-Konsole unter
+// Firestore → Regeln einfügen und veröffentlichen (Anleitung: README.md).
+//
+// Grundsätze:
+// - Schreiben überall nur für den Besitzer (OWNER_UID).
+// - Lesen nur, wer die raceId kennt: einzelne race-Dokumente per get,
+//   Auflisten der races-Sammlung verboten, Unter-Sammlungen lesbar –
+//   AUSSER races/{raceId}/private/**, das nur der Besitzer lesen darf.
+// - Alles andere ist gesperrt.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Muss mit OWNER_UID in js/config.js übereinstimmen.
+    function isOwner() {
+      return request.auth != null && request.auth.uid == 'BhdmzQX0tIWNeN6C7ib1TIczwUk2';
+    }
+
+    match /races/{raceId} {
+      // Nur gezielt per ID lesbar, nie auflistbar.
+      allow get: if true;
+      allow list: if false;
+      allow write: if isOwner();
+
+      // Privater Bereich (offizielle Route, eigene POIs): nur Besitzer.
+      match /private/{document=**} {
+        allow read, write: if isOwner();
+      }
+
+      // Alle übrigen Unter-Sammlungen (events, config, debug, …):
+      // lesbar für alle mit raceId, schreibbar nur Besitzer.
+      // Achtung: Diese Regel passt auch auf private/** – deshalb die Ausnahme.
+      match /{collection}/{document=**} {
+        allow read: if collection != 'private';
+        allow write: if isOwner();
+      }
+    }
+
+    // Alles andere: gesperrt (keine Regel = kein Zugriff).
+  }
+}

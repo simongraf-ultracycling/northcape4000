@@ -1,0 +1,124 @@
+/* ==========================================================================
+   Zentrale Design-Variablen – NorthCape 4000 ("Liquid Glass", dunkel)
+   Design-Änderungen NUR hier. css/app.css verwendet ausschliesslich diese
+   Variablen für Farben, Radien, Unschärfe und Schatten.
+   ========================================================================== */
+
+:root {
+  color-scheme: dark;
+
+  /* --- Schrift --------------------------------------------------------- */
+  --font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", system-ui, sans-serif;
+  --font-size: 17px; /* Grundgrösse; Eingabefelder nie unter 16px (sonst zoomt iOS) */
+  --font-size-small: 15px;
+  --font-size-tiny: 13px;
+  --font-size-large: 20px;
+  --font-size-title: 26px;
+  --font-size-hero: 32px;
+  --font-weight-strong: 600;
+  --line-height: 1.4;
+
+  /* --- Hintergrund (ruhiger Verlauf, damit das Glas sichtbar wird) ---- */
+  --bg-base: #060a16;
+  --bg-image:
+    radial-gradient(120% 60% at 90% -5%, rgba(80, 110, 230, 0.34), transparent 62%),
+    radial-gradient(90% 55% at -10% 38%, rgba(30, 170, 160, 0.20), transparent 64%),
+    radial-gradient(110% 60% at 75% 105%, rgba(255, 140, 70, 0.17), transparent 62%),
+    linear-gradient(180deg, #0b1328 0%, #070b19 55%, #05070f 100%);
+
+  /* --- Text ------------------------------------------------------------ */
+  --text: #f6f8fc;
+  --text-muted: rgba(230, 236, 248, 0.76);
+  --text-on-accent: #03141f;
+  --text-on-danger: #ffffff;
+  --text-on-sim: #1d1000;
+
+  /* --- Farben ---------------------------------------------------------- */
+  --accent: #64d2ff;
+  --accent-soft: rgba(100, 210, 255, 0.18);
+  --ok: #34d860;
+  --warn: #ffd60a;
+  --danger: #ff6b63;
+  --danger-fill: #d6342c;
+  --sim: #ff9f0a;
+  --offline: #a1a8b8;
+
+  /* --- Glas -------------------------------------------------------------- */
+  --glass-fill: rgba(32, 42, 70, 0.44);
+  --glass-fill-strong: rgba(24, 32, 56, 0.72);
+  --glass-fill-bar: rgba(20, 28, 52, 0.72); /* Kopfzeile, Tab-Leiste */
+  --glass-fill-banner: rgba(16, 24, 46, 0.9); /* Banner, Hinweise */
+  --glass-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.13) 0%, rgba(255, 255, 255, 0.04) 40%, rgba(255, 255, 255, 0) 100%);
+  --glass-filter: blur(22px) saturate(170%);
+  --glass-border: rgba(255, 255, 255, 0.14);
+  --glass-edge: rgba(255, 255, 255, 0.42); /* feine helle Lichtkante oben */
+  --glass-shadow: 0 14px 34px rgba(0, 0, 0, 0.40), 0 2px 8px rgba(0, 0, 0, 0.24);
+  --pressed: rgba(255, 255, 255, 0.14);
+  --separator: rgba(255, 255, 255, 0.11);
+  --field-fill: rgba(0, 0, 0, 0.30);
+  --field-border: rgba(255, 255, 255, 0.22);
+  --switch-off: rgba(255, 255, 255, 0.24);
+  --switch-on: var(--ok);
+  --switch-knob: #ffffff;
+  --switch-knob-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+
+  /* --- Radien ------------------------------------------------------------ */
+  --radius-s: 14px;
+  --radius-m: 20px;
+  --radius-l: 28px;
+  --radius-pill: 999px;
+
+  /* --- Grössen & Abstände ---------------------------------------------- */
+  --tap-min: 56px; /* Mindestgrösse Tippflächen (mit Handschuhen bedienbar) */
+  --space-xs: 6px;
+  --space-s: 10px;
+  --space-m: 16px;
+  --space-l: 24px;
+  --gutter: 16px;
+  --header-height: 60px;
+  --tabbar-height: 68px;
+  --floating-gap: 12px; /* Abstand schwebender Elemente zum Rand */
+  --sim-bar-height: 0px;
+  --focus-ring: 0 0 0 3px rgba(100, 210, 255, 0.75);
+}
+
+/* Sim-Modus: orange Leiste oben (siehe .sim-bar in app.css) */
+:root.sim {
+  --sim-bar-height: 32px;
+}
+
+/* --------------------------------------------------------------------------
+   Renn-Modus (Glas reduzieren): deckende, kontraststarke Flächen ohne
+   Unschärfe – besser im Sonnenlicht, schont den Akku (schwarz = OLED aus).
+   Wird per Schalter unter Mehr → Darstellung gesetzt und automatisch bei
+   "Transparenz reduzieren" / "Kontrast erhöhen" (js/ui/display.js).
+   -------------------------------------------------------------------------- */
+:root[data-glass="off"] {
+  --bg-base: #000000;
+  --bg-image: none;
+  --text: #ffffff;
+  --text-muted: #d8dee9;
+  --glass-fill: #151a24;
+  --glass-fill-strong: #1c222d;
+  --glass-fill-bar: #151a24;
+  --glass-fill-banner: #151a24;
+  --glass-sheen: none;
+  --glass-filter: none;
+  --glass-border: rgba(255, 255, 255, 0.45);
+  --glass-edge: transparent;
+  --glass-shadow: none;
+  --pressed: rgba(255, 255, 255, 0.22);
+  --separator: rgba(255, 255, 255, 0.30);
+  --field-fill: #000000;
+  --field-border: rgba(255, 255, 255, 0.60);
+  --switch-off: #4a5160;
+}
+
+/* Browser ohne backdrop-filter: Glas deckender, damit Text lesbar bleibt */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root {
+    --glass-fill: var(--glass-fill-strong);
+    --glass-fill-bar: var(--glass-fill-strong);
+    --glass-fill-banner: var(--glass-fill-strong);
+  }
+}
