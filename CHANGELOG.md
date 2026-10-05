@@ -4,6 +4,27 @@ Alle Änderungen an der App. Format angelehnt an [Keep a Changelog](https://keep
 Versionen nach [SemVer](https://semver.org/lang/de/). Die Versionsnummer steht ausschliesslich in
 `js/version.js` und wird bei jeder Änderung erhöht.
 
+## [0.3.0] – 2026-10-05
+
+### Neu
+
+- Zehn radikal unterschiedliche Designs statt fünf, jedes dunkel und hell:
+  **Polarnacht** (Liquid Glass, Original), **Neon-Velodrom** (Synthwave mit Laser-Gitter,
+  Neon-Glühen, schrägen Knöpfen), **Beton** (Brutalismus: dicke Rahmen, harte Schatten),
+  **Terminal** (grüner Phosphor-Bildschirm, hell als LCD-Velocomputer), **Gazzetta** (rosa
+  Sportzeitung, Didot-Schlagzeilen), **Plakat** (Schweizer Plakatstil, rote angedockte
+  Kopfzeile), **Topo** (Wanderkarte mit Höhenlinien, gestrichelte Rahmen), **Mondrian**
+  (Farbblöcke wie das La-Vie-Claire-Trikot), **Holo** (Y2K-Regenbogen-Chrom) und
+  **Skizze** (Notizbuch mit Handschrift und Klebezetteln, dunkel als Wandtafel).
+- Neue Form-Variablen: Rahmenstärke und -stil, harte Schatten, Glühen, Hintergrundmuster,
+  Kopfzeilen- und Tab-Leisten-Farben, angedockte Leisten, schief liegende Karten,
+  Knopf-Form (z.B. schräg), Symbol-Strichstärke, Schriften pro Titel/Abschnitt/Knopf.
+
+### Entfernt
+
+- Die Designs Mitternachtssonne, Fjord, Graphit und Alpen (zu ähnlich). Wer eines davon
+  gewählt hatte, landet automatisch bei Polarnacht.
+
 ## [0.2.0] – 2026-10-05
 
 ### Neu

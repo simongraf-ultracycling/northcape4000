@@ -33,7 +33,7 @@ index.html              App-Hülle (Kopfzeile, Tab-Leiste, CSP)
 manifest.webmanifest    PWA-Manifest
 sw.js                   Service Worker (Precache, Offline, Updates) – APP_FILES pflegen!
 firestore.rules         Sicherheitsregeln (in der Firebase-Konsole veröffentlichen)
-css/tokens.css          ALLE Design-Variablen: 5 Designs × Dunkel/Hell, Renn-Modus
+css/tokens.css          ALLE Design-Variablen: 10 Designs × Dunkel/Hell, Renn-Modus
 css/app.css             Layout und Komponenten, nur mit Variablen
 icons/                  App-Icons (erzeugt mit tools/make_icons.py)
 js/boot.js              Frühstart: Darstellung, frühe Fehler, Notfall-Anzeige
@@ -101,7 +101,7 @@ tools/make_icons.py     Icons einmalig erzeugen (nur Python-Standardbibliothek)
 
 | # | Etappe | Status |
 |---|--------|--------|
-| 1 | Grundgerüst: App-Hülle, Liquid-Glass-Design, Offline/Updates, Datenschicht, Login, Regeln, Sim-Modus, Debug | ✅ erledigt (v0.1.0; v0.2.0: fünf Designs mit Dunkel/Hell) |
+| 1 | Grundgerüst: App-Hülle, Liquid-Glass-Design, Offline/Updates, Datenschicht, Login, Regeln, Sim-Modus, Debug | ✅ erledigt (v0.1.0; v0.3.0: zehn Designs mit Dunkel/Hell) |
 | 2 | Status-Automat und Befindens-Regler mit Firebase-Sync | offen |
 | 3 | Karte: Testroute, Import der offiziellen GPX (nur privat!), Echtzeit-Standort, Versorgungspunkte, eigene POIs, Google-Maps-Knopf | offen |
 | 4 | Zeitplan: Gates, Zeitfenster, Fähren-Rechner | offen |
@@ -113,31 +113,45 @@ tools/make_icons.py     Icons einmalig erzeugen (nur Python-Standardbibliothek)
 
 ## Design-Grundsätze
 
-- Stil **Liquid Glass** (iOS 26): halbtransparente Flächen mit `backdrop-filter`
+- Ursprungsstil **Liquid Glass** (iOS 26, Design Polarnacht): halbtransparente Flächen mit `backdrop-filter`
   (Unschärfe + leichte Sättigung), feine helle Lichtkante oben, weiche Schatten, grosse
   Rundungen, Kapsel-Formen. Kopfzeile und Tab-Leiste als schwebende Glas-Kapseln.
 - Dezenter, ruhiger Hintergrund mit Farbverlauf. **Dunkles Design als Standard.**
-- **Fünf Designs** (Mehr → Darstellung), jedes mit **Dunkel- und Hellmodus**; dazu
-  "Automatisch" (folgt `prefers-color-scheme`). Standard: Polarnacht, Dunkel.
+- **Zehn Designs** (Mehr → Darstellung), bewusst radikal verschieden, jedes mit
+  **Dunkel- und Hellmodus**; dazu "Automatisch" (folgt `prefers-color-scheme`).
+  Standard: Polarnacht, Dunkel. Liquid Glass ist nur noch eines davon.
   | Design | Charakter |
   |---|---|
-  | `polarnacht` | Nordlicht-Blau, viel Glas, Kapseln (Original) |
-  | `mitternachtssonne` | warm, Goldgelb, runde Schrift (`ui-rounded`), grosse Radien |
-  | `fjord` | Tiefgrün/Nebel, weniger Unschärfe, mittlere Radien |
-  | `graphit` | kantig, Signalgelb, wenig Glas, Titel Monospace in Grossbuchstaben |
-  | `alpen` | Schwarz/Weiss/Schweizer Rot, Serifen-Titel (`ui-serif`), Hauptknöpfe weiss/schwarz |
+  | `polarnacht` | Liquid Glass, Nordlicht-Blau (Original, Standard) |
+  | `synthwave` (Neon-Velodrom) | Synthwave: Laser-Gitter, Sonnenuntergang, Neon-Glühen, schräge Knöpfe |
+  | `beton` | Brutalismus: 3-px-Rahmen, harte Versatz-Schatten, Giftgrün/Knallgelb, keine Rundungen |
+  | `terminal` | grüner Phosphor-Bildschirm mit Scanlines; hell = LCD-Velocomputer; alles Monospace |
+  | `gazzetta` | rosa Sportzeitung, Didot-Schlagzeilen, Zeitungs-Linien |
+  | `plakat` | Schweizer Plakatstil, Helvetica, rote angedockte Kopfzeile, Leisten am Rand |
+  | `topo` | Wanderkarte mit Höhenlinien, gestrichelte Rahmen, Palatino kursiv |
+  | `mondrian` | La-Vie-Claire-Farbblöcke, 4-px-Linien, Futura, farbige Kartenbänder |
+  | `holo` | Y2K-Hologramm: Regenbogen-Chrom, Blasen, Glühen, Arial Rounded |
+  | `skizze` | Notizbuch mit Handschrift (Noteworthy/Marker Felt), Klebezettel, schiefe Karten; dunkel = Wandtafel |
 - Umsetzung: `<html data-theme="…" data-mode="dark|light" data-glass="on|off">`. In
-  `css/tokens.css` je Design ein Form-Block (`[data-theme]`: Schrift, Radien, Unschärfe)
-  und je ein Farbblock pro Modus (`[data-theme][data-mode]`). `--accent` = Text/Symbole,
-  `--accent-fill` = Fläche von Hauptknöpfen/Auswahl (darf abweichen, z.B. Graphit hell:
-  Text schwarz, Fläche gelb). Neues Design: Blöcke in `tokens.css`, Eintrag in `THEMES`
-  (`js/ui/display.js`) und in der Liste in `js/boot.js` – `tools/check.mjs` prüft das.
+  `css/tokens.css`: gemeinsame Werte je Modus, Form-Grundwerte (`[data-theme]`), je Design
+  ein Form-Block und je ein Farbblock pro Modus (`[data-theme][data-mode]`).
+  Form-Variablen u.a.: `--border-width/-style`, `--separator-width`, `--radius-*`
+  (auch "handgezeichnete" Mehrfach-Radien), `--surface-inset`, `--glass-shadow` (auch harte
+  Schatten), `--text-glow`, `--bg-image` (Muster), `--glass-sheen(-2/-3)` (Kartenbänder,
+  Klebezettel), `--header-fill/-text/-accent`, `--tabbar-fill`, `--tab-*`, angedockte
+  Leisten (`--bar-gap`, `--header-gap`, `--tabbar-offset`, `--tabbar-safe-pad`),
+  `--card-tilt`, `--button-lift/-press`, `--icon-stroke`, Schriften für Titel, Abschnitte
+  und Knöpfe. `--accent` = Text/Symbole, `--accent-fill` = Fläche (darf ein Verlauf sein).
+  Nur iOS-Systemschriften verwenden (offline, keine Downloads).
+- Neues Design: Blöcke in `tokens.css`, Eintrag in `THEMES` (`js/ui/display.js`) und in
+  der Liste in `js/boot.js` – `tools/check.mjs` prüft das. Auch verrückte Designs müssen
+  lesbar bleiben (Kontrast, Tippflächen ≥ 56 px) und im Renn-Modus funktionieren.
 - Hellmodus: Hinter der iOS-Statusleiste (weisse Schrift) liegt eine leichte Abdunklung
   (`--statusbar-scrim`); auf dem iPhone kontrollieren.
 - **Lesbarkeit hat Vorrang:** Text und Bedienelemente immer kontraststark, auch auf Glas.
-- **Renn-Modus (Glas reduzieren)** unter Mehr → Darstellung: ersetzt alle Glas-Effekte
-  durch deckende, kontraststarke Flächen (Sonnenlicht, Akku) – dunkel schwarz, hell weiss,
-  in jedem Design (Akzentfarbe bleibt). Automatisch aktiv bei
+- **Renn-Modus (Glas reduzieren)** unter Mehr → Darstellung: ersetzt Glas, Muster,
+  Glühen, Schatten und Schräglage durch deckende, kontraststarke Flächen (Sonnenlicht,
+  Akku) – dunkel schwarz, hell weiss, in jedem Design (Schrift, Formen, Akzent bleiben). Automatisch aktiv bei
   `prefers-reduced-transparency` bzw. `prefers-contrast: more`.
 - Alle Farben, Radien, Unschärfe-Werte, Schatten als CSS-Variablen in `css/tokens.css`.
 - Touch: Tippflächen **mind. 56 px**, mit Handschuhen bedienbar, `touch-action: manipulation`,

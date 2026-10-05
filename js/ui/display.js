@@ -11,11 +11,16 @@
 import * as store from '../store.js';
 
 export const THEMES = [
-  { id: 'polarnacht', name: 'Polarnacht', description: 'Nordlicht-Blau mit viel Glas – das Original.' },
-  { id: 'mitternachtssonne', name: 'Mitternachtssonne', description: 'Warme Abendfarben, Goldgelb, runde Schrift.' },
-  { id: 'fjord', name: 'Fjord', description: 'Tiefgrün und Nebel – ruhig und natürlich.' },
-  { id: 'graphit', name: 'Graphit', description: 'Kantig, Signalgelb, wenig Glas – wie ein Velocomputer.' },
-  { id: 'alpen', name: 'Alpen', description: 'Schwarz, Weiss, Schweizer Rot und Serifen-Titel.' },
+  { id: 'polarnacht', name: 'Polarnacht', description: 'Liquid Glass in Nordlicht-Blau – das Original.' },
+  { id: 'synthwave', name: 'Neon-Velodrom', description: 'Synthwave: Neonröhren, Laser-Gitter, Sonnenuntergang, schräge Knöpfe.' },
+  { id: 'beton', name: 'Beton', description: 'Brutalismus: dicke Rahmen, harte Schatten, Giftgrün bzw. Knallgelb.' },
+  { id: 'terminal', name: 'Terminal', description: 'Grüner Phosphor-Bildschirm – hell als LCD-Velocomputer.' },
+  { id: 'gazzetta', name: 'Gazzetta', description: 'Rosa Sportzeitung mit Didot-Schlagzeilen – Maglia rosa.' },
+  { id: 'plakat', name: 'Plakat', description: 'Schweizer Plakatstil: Helvetica, rote Kopfzeile, angedockte Leisten.' },
+  { id: 'topo', name: 'Topo', description: 'Wanderkarte mit Höhenlinien, Seen und gestrichelten Wegen.' },
+  { id: 'mondrian', name: 'Mondrian', description: 'Farbblöcke wie das La-Vie-Claire-Trikot, Futura, dicke Linien.' },
+  { id: 'holo', name: 'Holo', description: 'Y2K-Hologramm: Regenbogen-Chrom, Blasen, Glühen.' },
+  { id: 'skizze', name: 'Skizze', description: 'Notizbuch mit Handschrift und Klebezetteln – dunkel als Wandtafel.' },
 ];
 
 export const COLOR_MODES = [

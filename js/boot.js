@@ -27,7 +27,7 @@
   }
 
   // Design und Erscheinungsbild (wie js/ui/display.js; Liste dort = Liste hier)
-  var THEMES = ['polarnacht', 'mitternachtssonne', 'fjord', 'graphit', 'alpen'];
+  var THEMES = ['polarnacht', 'synthwave', 'beton', 'terminal', 'gazzetta', 'plakat', 'topo', 'mondrian', 'holo', 'skizze'];
   var theme = read('theme');
   if (THEMES.indexOf(theme) < 0) theme = 'polarnacht';
   var mode = read('colorMode');
