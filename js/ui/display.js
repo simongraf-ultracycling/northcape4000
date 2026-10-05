@@ -1,36 +1,45 @@
-// Darstellung: Design, Erscheinungsbild (Dunkel/Hell/Automatisch) und
-// Renn-Modus (Glas reduzieren).
+// Darstellung: Design, Farbmodus und Renn-Modus (Glas reduzieren).
 //
-// Setzt auf <html> die Attribute data-theme, data-mode und data-glass; alle
+// Setzt auf <html> die Attribute data-theme (Design), data-mode (Farbmodus),
+// data-scheme (hell/dunkel, folgt aus dem Farbmodus) und data-glass; alle
 // Werte dazu stehen in css/tokens.css. js/boot.js setzt dieselben Attribute
-// schon vor dem ersten Bild (Liste der Designs dort ebenfalls nachführen).
+// schon vor dem ersten Bild (Listen dort ebenfalls nachführen).
 //
 // Renn-Modus: per Schalter ODER automatisch, wenn das System "Transparenz
 // reduzieren" bzw. "Kontrast erhöhen" meldet (sofern unterstützt).
 
 import * as store from '../store.js';
 
+// Designs: Schrift, Knopf-Stil, Symbole, Karten – ruhige Varianten derselben
+// schlichten, runden Form (Farben kommen aus dem Farbmodus).
 export const THEMES = [
-  { id: 'polarnacht', name: 'Polarnacht', description: 'Nordlicht-Blau mit klarem Glas – das Original.' },
-  { id: 'gletscher', name: 'Gletscher', description: 'Eisweiss und Petrol, stark mattiertes Glas.' },
-  { id: 'wald', name: 'Wald', description: 'Tannengrün und Moos, lindgrüner Akzent.' },
-  { id: 'sand', name: 'Sand', description: 'Wüstensand und Bernstein, warm und weich.' },
-  { id: 'abendrot', name: 'Abendrot', description: 'Koralle, Pfirsich und Magenta wie ein Sonnenuntergang.' },
-  { id: 'rose', name: 'Rosé', description: 'Rosa und Himbeere, besonders runde Formen.' },
-  { id: 'lavendel', name: 'Lavendel', description: 'Flieder und Violett mit runder Schrift.' },
-  { id: 'graphit', name: 'Graphit', description: 'Neutrales Grau, schwarz-weiss ohne Farbe.' },
-  { id: 'carbon', name: 'Carbon', description: 'Tiefschwarz, ganz klares Glas, Signalorange.' },
-  { id: 'mitternacht', name: 'Mitternacht', description: 'Tintenblau und Gold.' },
+  { id: 'klar', name: 'Klar', description: 'Wie iOS: SF Pro, gefüllte Knöpfe, schlichte Symbole.' },
+  { id: 'rund', name: 'Rund', description: 'Runde Schrift, Symbole in Kreisen, getönte Knöpfe.' },
+  { id: 'fein', name: 'Fein', description: 'Leichte Schrift, feine Linien, umrandete Flächen.' },
+  { id: 'kraeftig', name: 'Kräftig', description: 'Fette Schrift, kräftige Symbole auf Farbplättchen.' },
+  { id: 'klassik', name: 'Klassik', description: 'Serifen-Titel, schlanke Symbole, dunkle Knöpfe.' },
+  { id: 'technik', name: 'Technik', description: 'Monospace-Schrift, eckige Linienenden, Akzent Grün.' },
+  { id: 'avenir', name: 'Avenir', description: 'Avenir Next, Symbole in Ringen, getönte Knöpfe.' },
+  { id: 'helvetica', name: 'Helvetica', description: 'Schwarz-weiss, eckige Linienenden, ohne Farbe.' },
+  { id: 'glas', name: 'Glas', description: 'Durchscheinende Flächen mit Lichtkante und Schatten.' },
+  { id: 'geometrisch', name: 'Geometrisch', description: 'Futura-Titel, Symbole in Farbkreisen.' },
 ];
 
-export const COLOR_MODES = [
-  { id: 'dark', name: 'Dunkel' },
-  { id: 'light', name: 'Hell' },
-  { id: 'auto', name: 'Automatisch' },
+// Farbmodi: neutrale Hintergründe und Flächen
+export const MODES = [
+  { id: 'weiss', name: 'Weiss', scheme: 'light' },
+  { id: 'hellgrau', name: 'Hellgrau', scheme: 'light' },
+  { id: 'dunkelgrau', name: 'Dunkelgrau', scheme: 'dark' },
+  { id: 'dunkelblau', name: 'Dunkelblau', scheme: 'dark' },
+  { id: 'schwarz', name: 'Schwarz', scheme: 'dark' },
 ];
 
-const DEFAULT_THEME = 'polarnacht';
-const DEFAULT_MODE = 'dark'; // Dunkles Design als Standard
+// "Automatisch" folgt der iPhone-Einstellung Hell/Dunkel
+export const AUTO_MODE = { id: 'auto', name: 'Automatisch', light: 'weiss', dark: 'dunkelblau' };
+
+const DEFAULT_THEME = 'klar';
+const DEFAULT_MODE = 'dunkelblau'; // Dunkles Design als Standard
+const LEGACY_MODES = { dark: 'dunkelblau', light: 'weiss' }; // Einstellungen bis v0.4.0
 
 const raceQueries = ['(prefers-reduced-transparency: reduce)', '(prefers-contrast: more)'].map((q) => matchMedia(q));
 const darkQuery = matchMedia('(prefers-color-scheme: dark)');
@@ -47,23 +56,28 @@ export function setTheme(id) {
   if (THEMES.some((t) => t.id === id)) store.settings.set('theme', id);
 }
 
-// --- Erscheinungsbild ----------------------------------------------------------
+// --- Farbmodus -------------------------------------------------------------------
 
-// Gewählte Einstellung: 'dark' | 'light' | 'auto'
+// Gewählte Einstellung: Id aus MODES oder 'auto'
 export function getColorMode() {
-  const mode = store.settings.get('colorMode', DEFAULT_MODE);
-  return COLOR_MODES.some((m) => m.id === mode) ? mode : DEFAULT_MODE;
+  const stored = store.settings.get('colorMode', DEFAULT_MODE);
+  const mode = LEGACY_MODES[stored] || stored;
+  return mode === AUTO_MODE.id || MODES.some((m) => m.id === mode) ? mode : DEFAULT_MODE;
 }
 
 export function setColorMode(mode) {
-  if (COLOR_MODES.some((m) => m.id === mode)) store.settings.set('colorMode', mode);
+  if (mode === AUTO_MODE.id || MODES.some((m) => m.id === mode)) store.settings.set('colorMode', mode);
 }
 
-// Tatsächlich angezeigt: 'dark' | 'light'
+// Tatsächlich angezeigter Farbmodus (nie 'auto')
 export function getEffectiveMode() {
   const mode = getColorMode();
-  if (mode === 'auto') return darkQuery.matches ? 'dark' : 'light';
+  if (mode === AUTO_MODE.id) return darkQuery.matches ? AUTO_MODE.dark : AUTO_MODE.light;
   return mode;
+}
+
+export function schemeOf(modeId) {
+  return MODES.find((m) => m.id === modeId)?.scheme || 'dark';
 }
 
 // --- Renn-Modus -------------------------------------------------------------------
@@ -93,10 +107,12 @@ export function onDisplayChange(cb) {
 
 function apply() {
   const root = document.documentElement;
+  const mode = getEffectiveMode();
   root.setAttribute('data-theme', getTheme());
-  root.setAttribute('data-mode', getEffectiveMode());
+  root.setAttribute('data-mode', mode);
+  root.setAttribute('data-scheme', schemeOf(mode));
   root.setAttribute('data-glass', isRaceModeActive() ? 'off' : 'on');
-  // Browser-/Systemfarbe = Grundfarbe des aktiven Designs (aus css/tokens.css)
+  // Browser-/Systemfarbe = Hintergrund des aktiven Farbmodus (aus css/tokens.css)
   const base = getComputedStyle(root).getPropertyValue('--bg-base').trim();
   if (base) document.querySelector('meta[name="theme-color"]')?.setAttribute('content', base);
   for (const cb of listeners) cb();

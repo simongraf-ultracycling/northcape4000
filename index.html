@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="de-CH" data-theme="polarnacht" data-mode="dark">
+<html lang="de-CH" data-theme="klar" data-mode="dunkelblau" data-scheme="dark">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -22,7 +22,7 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Bikepacking" />
-    <meta name="theme-color" content="#060a16" />
+    <meta name="theme-color" content="#0b1324" />
     <meta name="color-scheme" content="dark light" />
     <meta name="format-detection" content="telephone=no" />
     <link rel="manifest" href="manifest.webmanifest" />
@@ -42,8 +42,8 @@
       <span id="sim-bar-time"></span>
     </div>
 
-    <!-- Oberer Rand: Inhalt verschwimmt unter dem Titel (keine Leiste) -->
-    <div class="top-edge" aria-hidden="true"></div>
+    <!-- Kopf- und Fussbereich: deckend in der Hintergrundfarbe (keine Leiste) -->
+    <div class="top-cover" aria-hidden="true"></div>
 
     <header class="app-header" id="app-header">
       <button class="header-back" id="header-back" type="button" hidden></button>
@@ -53,7 +53,7 @@
 
     <main class="view" id="view" tabindex="-1"></main>
 
-    <div class="bottom-edge" aria-hidden="true"></div>
+    <div class="bottom-cover" aria-hidden="true"></div>
     <div class="banner-area" id="banner-area" aria-live="polite"></div>
 
     <nav class="tabbar glass" id="tabbar" aria-label="Hauptnavigation">
