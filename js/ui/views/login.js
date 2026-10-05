@@ -3,6 +3,7 @@
 
 import { APP_NAME } from '../../config.js';
 import * as store from '../../store.js';
+import { VERSION } from '../../version.js';
 import { button, h } from '../dom.js';
 
 function field(label, input) {
@@ -67,6 +68,7 @@ export function renderLogin(container, { onSimMode }) {
         offlineHint,
         h('form', { class: 'stack', novalidate: true, onSubmit }, field('E-Mail', email), field('Passwort', password), error, submit),
         button('Sim-Modus (ohne Login)', { block: true, onClick: onSimMode }),
+        h('p', { class: 'footnote', text: `Version ${VERSION}` }),
       ),
     ),
   );

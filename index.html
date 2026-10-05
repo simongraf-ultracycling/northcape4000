@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="de-CH" data-theme="klar" data-mode="dunkelblau" data-scheme="dark">
+<html lang="de-CH" data-mode="dunkelblau" data-scheme="dark">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -20,7 +20,14 @@
     <!-- iOS Home-Screen-App -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <!--
+      Statusleiste deckend ("default"), Farbe = theme-color (Hintergrund des
+      Farbmodus, gesetzt von js/boot.js und js/ui/display.js). NICHT
+      "black-translucent": Ab iOS 26 legt iOS sonst eine Unschärfe über den
+      oberen Rand der App. iOS liest diesen Wert nur beim Hinzufügen zum
+      Home-Bildschirm.
+    -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Bikepacking" />
     <meta name="theme-color" content="#0b1324" />
     <meta name="color-scheme" content="dark light" />
@@ -42,7 +49,7 @@
       <span id="sim-bar-time"></span>
     </div>
 
-    <!-- Kopf- und Fussbereich: deckend in der Hintergrundfarbe (keine Leiste) -->
+    <!-- Kopfbereich: deckend in der Hintergrundfarbe (keine Leiste, keine Unschärfe) -->
     <div class="top-cover" aria-hidden="true"></div>
 
     <header class="app-header" id="app-header">
@@ -53,7 +60,6 @@
 
     <main class="view" id="view" tabindex="-1"></main>
 
-    <div class="bottom-cover" aria-hidden="true"></div>
     <div class="banner-area" id="banner-area" aria-live="polite"></div>
 
     <nav class="tabbar glass" id="tabbar" aria-label="Hauptnavigation">

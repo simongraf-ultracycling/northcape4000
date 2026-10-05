@@ -26,23 +26,28 @@
     }
   }
 
-  // Design und Farbmodus (wie js/ui/display.js; Listen dort = Listen hier)
-  var THEMES = ['klar', 'rund', 'fein', 'kraeftig', 'klassik', 'technik', 'avenir', 'helvetica', 'glas', 'geometrisch'];
+  // Farbmodus (wie js/ui/display.js; Liste dort = Liste hier)
   var MODES = { weiss: 'light', hellgrau: 'light', dunkelgrau: 'dark', dunkelblau: 'dark', schwarz: 'dark' };
-  var theme = read('theme');
-  if (THEMES.indexOf(theme) < 0) theme = 'klar';
   var mode = read('colorMode');
   if (mode === 'dark') mode = 'dunkelblau'; // Einstellungen bis v0.4.0
   if (mode === 'light') mode = 'weiss';
   if (mode === 'auto') mode = media('(prefers-color-scheme: dark)') ? 'dunkelblau' : 'weiss';
   if (!MODES.hasOwnProperty(mode)) mode = 'dunkelblau';
-  root.setAttribute('data-theme', theme);
   root.setAttribute('data-mode', mode);
   root.setAttribute('data-scheme', MODES[mode]);
 
   var forced = media('(prefers-reduced-transparency: reduce)') || media('(prefers-contrast: more)');
   root.setAttribute('data-glass', read('raceMode') === true || forced ? 'off' : 'on');
   if (read('simMode') === true) root.classList.add('sim');
+
+  // Statusleiste sofort in der Hintergrundfarbe (Stylesheets sind hier geladen)
+  try {
+    var base = getComputedStyle(root).getPropertyValue('--bg-base').trim();
+    var meta = document.querySelector('meta[name="theme-color"]');
+    if (base && meta) meta.setAttribute('content', base);
+  } catch (e) {
+    // nur Kosmetik
+  }
 
   // Eckradius des iPhone-Bildschirms (in Punkten) nach Bildschirmgrösse –
   // die Tab-Leiste liegt konzentrisch dazu (--tabbar-inset in css/tokens.css).
