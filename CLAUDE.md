@@ -33,7 +33,7 @@ index.html              App-Hülle (Kopfzeile, Tab-Leiste, CSP)
 manifest.webmanifest    PWA-Manifest
 sw.js                   Service Worker (Precache, Offline, Updates) – APP_FILES pflegen!
 firestore.rules         Sicherheitsregeln (in der Firebase-Konsole veröffentlichen)
-css/tokens.css          ALLE Design-Variablen (Farben, Radien, Unschärfe, Renn-Modus)
+css/tokens.css          ALLE Design-Variablen: 5 Designs × Dunkel/Hell, Renn-Modus
 css/app.css             Layout und Komponenten, nur mit Variablen
 icons/                  App-Icons (erzeugt mit tools/make_icons.py)
 js/boot.js              Frühstart: Darstellung, frühe Fehler, Notfall-Anzeige
@@ -49,6 +49,7 @@ js/store/firebase-backend.js   Firestore + Auth (nur von store.js benutzt)
 js/store/sim-backend.js        Lokaler Simulator (gleiche Schnittstelle)
 js/store/sim-seed.js           Testdaten für den Sim-Modus
 js/update.js            Service-Worker-Registrierung, Update-Erkennung, Cache leeren
+js/ui/display.js        Design, Dunkel/Hell/Automatisch, Renn-Modus (setzt data-Attribute)
 js/ui/…                 Oberfläche: dom-Helfer, Symbole, Hülle, Router, Ansichten
 tools/check.mjs         Regel-Prüfung: node tools/check.mjs (nur Node-Bordmittel)
 tools/make_icons.py     Icons einmalig erzeugen (nur Python-Standardbibliothek)
@@ -100,7 +101,7 @@ tools/make_icons.py     Icons einmalig erzeugen (nur Python-Standardbibliothek)
 
 | # | Etappe | Status |
 |---|--------|--------|
-| 1 | Grundgerüst: App-Hülle, Liquid-Glass-Design, Offline/Updates, Datenschicht, Login, Regeln, Sim-Modus, Debug | ✅ erledigt (v0.1.0) |
+| 1 | Grundgerüst: App-Hülle, Liquid-Glass-Design, Offline/Updates, Datenschicht, Login, Regeln, Sim-Modus, Debug | ✅ erledigt (v0.1.0; v0.2.0: fünf Designs mit Dunkel/Hell) |
 | 2 | Status-Automat und Befindens-Regler mit Firebase-Sync | offen |
 | 3 | Karte: Testroute, Import der offiziellen GPX (nur privat!), Echtzeit-Standort, Versorgungspunkte, eigene POIs, Google-Maps-Knopf | offen |
 | 4 | Zeitplan: Gates, Zeitfenster, Fähren-Rechner | offen |
@@ -116,9 +117,27 @@ tools/make_icons.py     Icons einmalig erzeugen (nur Python-Standardbibliothek)
   (Unschärfe + leichte Sättigung), feine helle Lichtkante oben, weiche Schatten, grosse
   Rundungen, Kapsel-Formen. Kopfzeile und Tab-Leiste als schwebende Glas-Kapseln.
 - Dezenter, ruhiger Hintergrund mit Farbverlauf. **Dunkles Design als Standard.**
+- **Fünf Designs** (Mehr → Darstellung), jedes mit **Dunkel- und Hellmodus**; dazu
+  "Automatisch" (folgt `prefers-color-scheme`). Standard: Polarnacht, Dunkel.
+  | Design | Charakter |
+  |---|---|
+  | `polarnacht` | Nordlicht-Blau, viel Glas, Kapseln (Original) |
+  | `mitternachtssonne` | warm, Goldgelb, runde Schrift (`ui-rounded`), grosse Radien |
+  | `fjord` | Tiefgrün/Nebel, weniger Unschärfe, mittlere Radien |
+  | `graphit` | kantig, Signalgelb, wenig Glas, Titel Monospace in Grossbuchstaben |
+  | `alpen` | Schwarz/Weiss/Schweizer Rot, Serifen-Titel (`ui-serif`), Hauptknöpfe weiss/schwarz |
+- Umsetzung: `<html data-theme="…" data-mode="dark|light" data-glass="on|off">`. In
+  `css/tokens.css` je Design ein Form-Block (`[data-theme]`: Schrift, Radien, Unschärfe)
+  und je ein Farbblock pro Modus (`[data-theme][data-mode]`). `--accent` = Text/Symbole,
+  `--accent-fill` = Fläche von Hauptknöpfen/Auswahl (darf abweichen, z.B. Graphit hell:
+  Text schwarz, Fläche gelb). Neues Design: Blöcke in `tokens.css`, Eintrag in `THEMES`
+  (`js/ui/display.js`) und in der Liste in `js/boot.js` – `tools/check.mjs` prüft das.
+- Hellmodus: Hinter der iOS-Statusleiste (weisse Schrift) liegt eine leichte Abdunklung
+  (`--statusbar-scrim`); auf dem iPhone kontrollieren.
 - **Lesbarkeit hat Vorrang:** Text und Bedienelemente immer kontraststark, auch auf Glas.
 - **Renn-Modus (Glas reduzieren)** unter Mehr → Darstellung: ersetzt alle Glas-Effekte
-  durch deckende, kontraststarke Flächen (Sonnenlicht, Akku). Automatisch aktiv bei
+  durch deckende, kontraststarke Flächen (Sonnenlicht, Akku) – dunkel schwarz, hell weiss,
+  in jedem Design (Akzentfarbe bleibt). Automatisch aktiv bei
   `prefers-reduced-transparency` bzw. `prefers-contrast: more`.
 - Alle Farben, Radien, Unschärfe-Werte, Schatten als CSS-Variablen in `css/tokens.css`.
 - Touch: Tippflächen **mind. 56 px**, mit Handschuhen bedienbar, `touch-action: manipulation`,
@@ -141,10 +160,14 @@ tools/make_icons.py     Icons einmalig erzeugen (nur Python-Standardbibliothek)
   metrische Einheiten.
 - Keine externen Abhängigkeiten ausser Firebase-SDK; spätere Bibliotheken (z.B. Karte,
   Diagramme) per CDN mit fester Version und im Service Worker gecacht.
-- Design-Änderungen nur über die zentralen CSS-Variablen; Renn-Modus muss immer funktionieren.
+- Design-Änderungen nur über die zentralen CSS-Variablen; Renn-Modus muss immer funktionieren
+  (in jedem Design, dunkel und hell).
 
 ### Praktische Ergänzungen
 
+- **Arbeitsweise (Wunsch von Simon):** Fertige Änderungen immer direkt als Pull Request
+  auf `main` bringen und sofort mergen – nicht nachfragen. GitHub Pages veröffentlicht
+  danach automatisch; die App zeigt das Update-Banner.
 - Ausnahmen der Datenregel: `js/clock.js` und `js/log.js` nutzen den Geräte-Speicher
   (`js/local.js`) direkt (vermeidet Import-Zyklen); `js/boot.js` liest dieselben Schlüssel.
 - Neue App-Dateien in `APP_FILES` von `sw.js` eintragen; neue externe Quellen (CDN,

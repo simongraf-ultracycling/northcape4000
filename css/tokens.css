@@ -1,14 +1,27 @@
 /* ==========================================================================
-   Zentrale Design-Variablen – NorthCape 4000 ("Liquid Glass", dunkel)
+   Zentrale Design-Variablen – NorthCape 4000
    Design-Änderungen NUR hier. css/app.css verwendet ausschliesslich diese
-   Variablen für Farben, Radien, Unschärfe und Schatten.
+   Variablen für Farben, Radien, Unschärfe, Schatten und Schriften.
+
+   Aufbau
+   1. Grundwerte (:root)            Grössen, Abstände, Schriftgrössen
+   2. Gemeinsame Werte je Modus     [data-mode="dark"] / [data-mode="light"]
+   3. Fünf Designs                  [data-theme="…"]                 Form, Schrift, Glas
+                                    [data-theme="…"][data-mode="…"]  Farben
+   4. Renn-Modus                    [data-glass="off"] (dunkel/hell), schlägt jedes Design
+   5. Sim-Modus, Fallbacks
+
+   Die Attribute setzt js/boot.js (vor dem ersten Bild) und js/ui/display.js.
+   Neues Design: Blöcke hier ergänzen + THEMES in js/ui/display.js + Liste in
+   js/boot.js (node tools/check.mjs prüft das).
    ========================================================================== */
 
-:root {
-  color-scheme: dark;
+/* --------------------------------------------------------------------------
+   1. Grundwerte
+   -------------------------------------------------------------------------- */
 
-  /* --- Schrift --------------------------------------------------------- */
-  --font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", system-ui, sans-serif;
+:root {
+  /* Schrift */
   --font-size: 17px; /* Grundgrösse; Eingabefelder nie unter 16px (sonst zoomt iOS) */
   --font-size-small: 15px;
   --font-size-tiny: 13px;
@@ -18,57 +31,7 @@
   --font-weight-strong: 600;
   --line-height: 1.4;
 
-  /* --- Hintergrund (ruhiger Verlauf, damit das Glas sichtbar wird) ---- */
-  --bg-base: #060a16;
-  --bg-image:
-    radial-gradient(120% 60% at 90% -5%, rgba(80, 110, 230, 0.34), transparent 62%),
-    radial-gradient(90% 55% at -10% 38%, rgba(30, 170, 160, 0.20), transparent 64%),
-    radial-gradient(110% 60% at 75% 105%, rgba(255, 140, 70, 0.17), transparent 62%),
-    linear-gradient(180deg, #0b1328 0%, #070b19 55%, #05070f 100%);
-
-  /* --- Text ------------------------------------------------------------ */
-  --text: #f6f8fc;
-  --text-muted: rgba(230, 236, 248, 0.76);
-  --text-on-accent: #03141f;
-  --text-on-danger: #ffffff;
-  --text-on-sim: #1d1000;
-
-  /* --- Farben ---------------------------------------------------------- */
-  --accent: #64d2ff;
-  --accent-soft: rgba(100, 210, 255, 0.18);
-  --ok: #34d860;
-  --warn: #ffd60a;
-  --danger: #ff6b63;
-  --danger-fill: #d6342c;
-  --sim: #ff9f0a;
-  --offline: #a1a8b8;
-
-  /* --- Glas -------------------------------------------------------------- */
-  --glass-fill: rgba(32, 42, 70, 0.44);
-  --glass-fill-strong: rgba(24, 32, 56, 0.72);
-  --glass-fill-bar: rgba(20, 28, 52, 0.72); /* Kopfzeile, Tab-Leiste */
-  --glass-fill-banner: rgba(16, 24, 46, 0.9); /* Banner, Hinweise */
-  --glass-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.13) 0%, rgba(255, 255, 255, 0.04) 40%, rgba(255, 255, 255, 0) 100%);
-  --glass-filter: blur(22px) saturate(170%);
-  --glass-border: rgba(255, 255, 255, 0.14);
-  --glass-edge: rgba(255, 255, 255, 0.42); /* feine helle Lichtkante oben */
-  --glass-shadow: 0 14px 34px rgba(0, 0, 0, 0.40), 0 2px 8px rgba(0, 0, 0, 0.24);
-  --pressed: rgba(255, 255, 255, 0.14);
-  --separator: rgba(255, 255, 255, 0.11);
-  --field-fill: rgba(0, 0, 0, 0.30);
-  --field-border: rgba(255, 255, 255, 0.22);
-  --switch-off: rgba(255, 255, 255, 0.24);
-  --switch-on: var(--ok);
-  --switch-knob: #ffffff;
-  --switch-knob-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
-
-  /* --- Radien ------------------------------------------------------------ */
-  --radius-s: 14px;
-  --radius-m: 20px;
-  --radius-l: 28px;
-  --radius-pill: 999px;
-
-  /* --- Grössen & Abstände ---------------------------------------------- */
+  /* Grössen & Abstände */
   --tap-min: 56px; /* Mindestgrösse Tippflächen (mit Handschuhen bedienbar) */
   --space-xs: 6px;
   --space-s: 10px;
@@ -79,29 +42,374 @@
   --tabbar-height: 68px;
   --floating-gap: 12px; /* Abstand schwebender Elemente zum Rand */
   --sim-bar-height: 0px;
-  --focus-ring: 0 0 0 3px rgba(100, 210, 255, 0.75);
-}
-
-/* Sim-Modus: orange Leiste oben (siehe .sim-bar in app.css) */
-:root.sim {
-  --sim-bar-height: 32px;
+  --radius-pill: 999px;
 }
 
 /* --------------------------------------------------------------------------
-   Renn-Modus (Glas reduzieren): deckende, kontraststarke Flächen ohne
-   Unschärfe – besser im Sonnenlicht, schont den Akku (schwarz = OLED aus).
-   Wird per Schalter unter Mehr → Darstellung gesetzt und automatisch bei
-   "Transparenz reduzieren" / "Kontrast erhöhen" (js/ui/display.js).
+   2. Gemeinsame Werte je Modus (Status-Farben, Schalter, Felder, Glas-Kanten)
+   :root dient als Rückfall, falls noch kein Attribut gesetzt ist.
    -------------------------------------------------------------------------- */
-:root[data-glass="off"] {
+
+:root,
+[data-mode="dark"] {
+  color-scheme: dark;
+  --ok: #34d860;
+  --warn: #ffd60a;
+  --danger: #ff6b63;
+  --danger-fill: #d6342c;
+  --text-on-danger: #ffffff;
+  --sim: #ff9f0a; /* Sim-Leiste (Fläche) */
+  --sim-text: #ffb340; /* Sim-Hinweise als Text */
+  --text-on-sim: #1d1000;
+  --offline: #a1a8b8;
+  --glass-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.13) 0%, rgba(255, 255, 255, 0.04) 40%, rgba(255, 255, 255, 0) 100%);
+  --glass-border: rgba(255, 255, 255, 0.14);
+  --glass-edge: rgba(255, 255, 255, 0.42); /* feine helle Lichtkante oben */
+  --glass-shadow: 0 14px 34px rgba(0, 0, 0, 0.40), 0 2px 8px rgba(0, 0, 0, 0.24);
+  --pressed: rgba(255, 255, 255, 0.14);
+  --separator: rgba(255, 255, 255, 0.11);
+  --field-fill: rgba(0, 0, 0, 0.30);
+  --field-border: rgba(255, 255, 255, 0.22);
+  --switch-off: rgba(255, 255, 255, 0.24);
+  --switch-on: #34d860;
+  --switch-knob: #ffffff;
+  --switch-knob-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  --statusbar-scrim: none; /* Abdunklung hinter der iOS-Statusleiste */
+}
+
+[data-mode="light"] {
+  color-scheme: light;
+  --ok: #157f3b;
+  --warn: #9a6200;
+  --danger: #c62828;
+  --danger-fill: #d32f2f;
+  --text-on-danger: #ffffff;
+  --sim: #ff9f0a;
+  --sim-text: #b45309;
+  --text-on-sim: #1d1000;
+  --offline: #646b78;
+  --glass-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.65) 0%, rgba(255, 255, 255, 0.18) 40%, rgba(255, 255, 255, 0) 100%);
+  --glass-border: rgba(10, 20, 40, 0.10);
+  --glass-edge: rgba(255, 255, 255, 0.95);
+  --glass-shadow: 0 12px 30px rgba(20, 30, 60, 0.14), 0 2px 6px rgba(20, 30, 60, 0.08);
+  --pressed: rgba(10, 20, 40, 0.07);
+  --separator: rgba(10, 20, 40, 0.10);
+  --field-fill: rgba(255, 255, 255, 0.78);
+  --field-border: rgba(10, 20, 40, 0.22);
+  --switch-off: rgba(10, 20, 40, 0.18);
+  --switch-on: #20a148;
+  --switch-knob: #ffffff;
+  --switch-knob-shadow: 0 2px 6px rgba(0, 0, 0, 0.22);
+  /* iOS zeigt die Statusleiste (Uhr, Akku) weiss → im Hellmodus leicht abdunkeln */
+  --statusbar-scrim: linear-gradient(180deg, rgba(8, 12, 24, 0.5) 0%, rgba(8, 12, 24, 0.32) 65%, rgba(8, 12, 24, 0) 100%);
+}
+
+/* --------------------------------------------------------------------------
+   3. Designs
+   -------------------------------------------------------------------------- */
+
+/* === 3.1 Polarnacht – Nordlicht-Blau, viel Glas (Standard) =============== */
+
+:root,
+[data-theme="polarnacht"] {
+  --font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", system-ui, sans-serif;
+  --font-display: var(--font-family);
+  --font-weight-title: 700;
+  --title-transform: none;
+  --title-tracking: normal;
+  --radius-s: 14px;
+  --radius-m: 20px;
+  --radius-l: 28px;
+  --radius-control: 999px; /* Knöpfe, Kopfzeile, Tab-Leiste */
+  --glass-filter: blur(22px) saturate(170%);
+}
+
+:root,
+[data-theme="polarnacht"][data-mode="dark"] {
+  --bg-base: #060a16;
+  --bg-image:
+    radial-gradient(120% 60% at 90% -5%, rgba(80, 110, 230, 0.34), transparent 62%),
+    radial-gradient(90% 55% at -10% 38%, rgba(30, 170, 160, 0.20), transparent 64%),
+    radial-gradient(110% 60% at 75% 105%, rgba(255, 140, 70, 0.17), transparent 62%),
+    linear-gradient(180deg, #0b1328 0%, #070b19 55%, #05070f 100%);
+  --text: #f6f8fc;
+  --text-muted: rgba(230, 236, 248, 0.76);
+  --accent: #64d2ff;
+  --accent-fill: #64d2ff;
+  --accent-soft: rgba(100, 210, 255, 0.18);
+  --text-on-accent: #03141f;
+  --glass-fill: rgba(32, 42, 70, 0.44);
+  --glass-fill-strong: rgba(24, 32, 56, 0.72);
+  --glass-fill-bar: rgba(20, 28, 52, 0.72); /* Kopfzeile, Tab-Leiste */
+  --glass-fill-banner: rgba(16, 24, 46, 0.9); /* Banner, Hinweise */
+  --focus-ring: 0 0 0 3px rgba(100, 210, 255, 0.75);
+}
+
+[data-theme="polarnacht"][data-mode="light"] {
+  --bg-base: #e9f0fa;
+  --bg-image:
+    radial-gradient(120% 60% at 90% -5%, rgba(110, 150, 255, 0.38), transparent 62%),
+    radial-gradient(90% 55% at -10% 38%, rgba(60, 200, 190, 0.24), transparent 64%),
+    radial-gradient(110% 60% at 75% 105%, rgba(255, 170, 110, 0.26), transparent 62%),
+    linear-gradient(180deg, #dbe6f7 0%, #eaf0fa 55%, #f4f7fc 100%);
+  --text: #0b1426;
+  --text-muted: rgba(16, 28, 52, 0.72);
+  --accent: #0a66c2;
+  --accent-fill: #0a66c2;
+  --accent-soft: rgba(10, 102, 194, 0.13);
+  --text-on-accent: #ffffff;
+  --glass-fill: rgba(255, 255, 255, 0.52);
+  --glass-fill-strong: rgba(255, 255, 255, 0.86);
+  --glass-fill-bar: rgba(255, 255, 255, 0.74);
+  --glass-fill-banner: rgba(255, 255, 255, 0.93);
+  --focus-ring: 0 0 0 3px rgba(10, 102, 194, 0.45);
+}
+
+/* === 3.2 Mitternachtssonne – warme Abendfarben, Goldgelb, runde Schrift === */
+
+[data-theme="mitternachtssonne"] {
+  --font-family: ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-display: var(--font-family);
+  --font-weight-title: 700;
+  --title-transform: none;
+  --title-tracking: normal;
+  --radius-s: 18px;
+  --radius-m: 26px;
+  --radius-l: 34px;
+  --radius-control: 999px;
+  --glass-filter: blur(28px) saturate(150%);
+}
+
+[data-theme="mitternachtssonne"][data-mode="dark"] {
+  --bg-base: #150a12;
+  --bg-image:
+    radial-gradient(110% 60% at 85% -5%, rgba(255, 120, 60, 0.32), transparent 62%),
+    radial-gradient(90% 60% at -10% 40%, rgba(180, 60, 150, 0.26), transparent 64%),
+    radial-gradient(120% 70% at 60% 108%, rgba(255, 190, 90, 0.20), transparent 60%),
+    linear-gradient(180deg, #261020 0%, #180a15 55%, #0e060c 100%);
+  --text: #fff6ef;
+  --text-muted: rgba(255, 232, 220, 0.76);
+  --accent: #ffc857;
+  --accent-fill: #ffc857;
+  --accent-soft: rgba(255, 200, 87, 0.18);
+  --text-on-accent: #2a1500;
+  --glass-fill: rgba(78, 34, 56, 0.44);
+  --glass-fill-strong: rgba(60, 24, 44, 0.76);
+  --glass-fill-bar: rgba(54, 22, 40, 0.76);
+  --glass-fill-banner: rgba(44, 17, 33, 0.92);
+  --glass-border: rgba(255, 220, 200, 0.16);
+  --glass-edge: rgba(255, 230, 210, 0.48);
+  --focus-ring: 0 0 0 3px rgba(255, 200, 87, 0.7);
+}
+
+[data-theme="mitternachtssonne"][data-mode="light"] {
+  --bg-base: #fff3ea;
+  --bg-image:
+    radial-gradient(110% 60% at 85% -5%, rgba(255, 140, 80, 0.36), transparent 62%),
+    radial-gradient(90% 60% at -10% 40%, rgba(235, 110, 170, 0.22), transparent 64%),
+    radial-gradient(120% 70% at 60% 108%, rgba(255, 200, 110, 0.32), transparent 60%),
+    linear-gradient(180deg, #ffe4d4 0%, #fff1e7 55%, #fff8f2 100%);
+  --text: #2b1219;
+  --text-muted: rgba(66, 28, 38, 0.74);
+  --accent: #b4490c;
+  --accent-fill: #b4490c;
+  --accent-soft: rgba(180, 73, 12, 0.12);
+  --text-on-accent: #ffffff;
+  --glass-fill: rgba(255, 252, 248, 0.55);
+  --glass-fill-strong: rgba(255, 252, 248, 0.88);
+  --glass-fill-bar: rgba(255, 250, 245, 0.76);
+  --glass-fill-banner: rgba(255, 250, 245, 0.94);
+  --glass-border: rgba(110, 40, 20, 0.11);
+  --glass-shadow: 0 12px 30px rgba(120, 50, 30, 0.15), 0 2px 6px rgba(120, 50, 30, 0.08);
+  --focus-ring: 0 0 0 3px rgba(180, 73, 12, 0.4);
+}
+
+/* === 3.3 Fjord – Tiefgrün und Nebel, ruhig ============================== */
+
+[data-theme="fjord"] {
+  --font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", system-ui, sans-serif;
+  --font-display: var(--font-family);
+  --font-weight-title: 600;
+  --title-transform: none;
+  --title-tracking: -0.01em;
+  --radius-s: 12px;
+  --radius-m: 16px;
+  --radius-l: 22px;
+  --radius-control: 999px;
+  --glass-filter: blur(16px) saturate(130%);
+}
+
+[data-theme="fjord"][data-mode="dark"] {
+  --bg-base: #05110e;
+  --bg-image:
+    radial-gradient(120% 60% at 90% -5%, rgba(40, 170, 140, 0.30), transparent 62%),
+    radial-gradient(90% 55% at -10% 45%, rgba(60, 120, 180, 0.22), transparent 64%),
+    radial-gradient(110% 60% at 70% 105%, rgba(160, 210, 120, 0.13), transparent 60%),
+    linear-gradient(180deg, #0a1d19 0%, #071410 55%, #040b09 100%);
+  --text: #effaf6;
+  --text-muted: rgba(214, 238, 229, 0.76);
+  --accent: #5eead4;
+  --accent-fill: #5eead4;
+  --accent-soft: rgba(94, 234, 212, 0.16);
+  --text-on-accent: #03241f;
+  --glass-fill: rgba(28, 62, 54, 0.44);
+  --glass-fill-strong: rgba(20, 48, 42, 0.76);
+  --glass-fill-bar: rgba(18, 44, 38, 0.78);
+  --glass-fill-banner: rgba(14, 36, 31, 0.92);
+  --glass-border: rgba(210, 255, 240, 0.13);
+  --glass-edge: rgba(220, 255, 245, 0.38);
+  --focus-ring: 0 0 0 3px rgba(94, 234, 212, 0.6);
+}
+
+[data-theme="fjord"][data-mode="light"] {
+  --bg-base: #edf3f0;
+  --bg-image:
+    radial-gradient(120% 60% at 90% -5%, rgba(80, 180, 150, 0.30), transparent 62%),
+    radial-gradient(90% 55% at -10% 45%, rgba(110, 150, 200, 0.22), transparent 64%),
+    linear-gradient(180deg, #dfece7 0%, #ecf3f0 55%, #f5f9f7 100%);
+  --text: #0c231e;
+  --text-muted: rgba(14, 44, 37, 0.74);
+  --accent: #0f766e;
+  --accent-fill: #0f766e;
+  --accent-soft: rgba(15, 118, 110, 0.12);
+  --text-on-accent: #ffffff;
+  --glass-fill: rgba(255, 255, 255, 0.5);
+  --glass-fill-strong: rgba(255, 255, 255, 0.86);
+  --glass-fill-bar: rgba(250, 253, 252, 0.76);
+  --glass-fill-banner: rgba(250, 253, 252, 0.94);
+  --glass-border: rgba(10, 50, 40, 0.10);
+  --glass-shadow: 0 12px 28px rgba(20, 60, 50, 0.13), 0 2px 6px rgba(20, 60, 50, 0.07);
+  --focus-ring: 0 0 0 3px rgba(15, 118, 110, 0.4);
+}
+
+/* === 3.4 Graphit – kantig, Signalgelb, wenig Glas (Velocomputer) ========= */
+
+[data-theme="graphit"] {
+  --font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", system-ui, sans-serif;
+  --font-display: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+  --font-weight-title: 700;
+  --title-transform: uppercase;
+  --title-tracking: 0.04em;
+  --radius-s: 6px;
+  --radius-m: 10px;
+  --radius-l: 14px;
+  --radius-control: 14px;
+  --glass-filter: blur(10px) saturate(110%);
+}
+
+[data-theme="graphit"][data-mode="dark"] {
+  --bg-base: #0b0c0e;
+  --bg-image:
+    radial-gradient(90% 45% at 50% -8%, rgba(255, 214, 10, 0.07), transparent 70%),
+    linear-gradient(180deg, #17191d 0%, #0f1013 60%, #0a0b0d 100%);
+  --text: #f4f4f5;
+  --text-muted: #b4b8bf;
+  --accent: #ffd60a;
+  --accent-fill: #ffd60a;
+  --accent-soft: rgba(255, 214, 10, 0.16);
+  --text-on-accent: #111111;
+  --warn: #ffb020;
+  --glass-fill: rgba(36, 38, 44, 0.82);
+  --glass-fill-strong: #22252b;
+  --glass-fill-bar: rgba(28, 30, 35, 0.92);
+  --glass-fill-banner: rgba(28, 30, 35, 0.97);
+  --glass-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 50%);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --glass-edge: rgba(255, 255, 255, 0.10);
+  --glass-shadow: 0 8px 22px rgba(0, 0, 0, 0.5);
+  --focus-ring: 0 0 0 3px rgba(255, 214, 10, 0.65);
+}
+
+[data-theme="graphit"][data-mode="light"] {
+  --bg-base: #e6e7ea;
+  --bg-image: linear-gradient(180deg, #f1f2f4 0%, #e6e7ea 100%);
+  --text: #111214;
+  --text-muted: #474c54;
+  --accent: #111214; /* Gelb ist auf Hell als Text nicht lesbar → Schwarz */
+  --accent-fill: #ffd60a;
+  --accent-soft: rgba(255, 214, 10, 0.55);
+  --text-on-accent: #111111;
+  --glass-fill: rgba(255, 255, 255, 0.88);
+  --glass-fill-strong: #ffffff;
+  --glass-fill-bar: rgba(255, 255, 255, 0.95);
+  --glass-fill-banner: #ffffff;
+  --glass-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0) 50%);
+  --glass-border: rgba(0, 0, 0, 0.13);
+  --glass-edge: rgba(255, 255, 255, 0.8);
+  --glass-shadow: 0 6px 16px rgba(0, 0, 0, 0.10);
+  --focus-ring: 0 0 0 3px rgba(17, 18, 20, 0.45);
+}
+
+/* === 3.5 Alpen – Schwarz, Weiss, Schweizer Rot, Serifen-Titel ============ */
+
+[data-theme="alpen"] {
+  --font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", system-ui, sans-serif;
+  --font-display: ui-serif, "New York", "Iowan Old Style", Georgia, serif;
+  --font-weight-title: 700;
+  --title-transform: none;
+  --title-tracking: normal;
+  --radius-s: 10px;
+  --radius-m: 14px;
+  --radius-l: 20px;
+  --radius-control: 999px;
+  --glass-filter: blur(20px) saturate(140%);
+}
+
+[data-theme="alpen"][data-mode="dark"] {
+  --bg-base: #0e0e11;
+  --bg-image:
+    radial-gradient(120% 60% at 88% -6%, rgba(227, 6, 19, 0.24), transparent 60%),
+    radial-gradient(100% 60% at -10% 60%, rgba(120, 140, 170, 0.14), transparent 64%),
+    linear-gradient(180deg, #1b1b20 0%, #121216 55%, #0a0a0c 100%);
+  --text: #fafafa;
+  --text-muted: rgba(236, 236, 242, 0.76);
+  --accent: #ff5a5f;
+  --accent-fill: #f5f5f5; /* Hauptknöpfe weiss, Rot für Akzente */
+  --accent-soft: rgba(255, 90, 95, 0.16);
+  --text-on-accent: #121212;
+  --glass-fill: rgba(40, 40, 46, 0.5);
+  --glass-fill-strong: rgba(30, 30, 36, 0.8);
+  --glass-fill-bar: rgba(28, 28, 33, 0.8);
+  --glass-fill-banner: rgba(24, 24, 28, 0.94);
+  --focus-ring: 0 0 0 3px rgba(255, 90, 95, 0.6);
+}
+
+[data-theme="alpen"][data-mode="light"] {
+  --bg-base: #f6f5f3;
+  --bg-image:
+    radial-gradient(120% 60% at 88% -6%, rgba(227, 6, 19, 0.12), transparent 60%),
+    linear-gradient(180deg, #ffffff 0%, #f6f5f3 60%, #efeeeb 100%);
+  --text: #141414;
+  --text-muted: #55575d;
+  --accent: #c8102e;
+  --accent-fill: #141414; /* Hauptknöpfe schwarz, Rot für Akzente */
+  --accent-soft: rgba(200, 16, 46, 0.10);
+  --text-on-accent: #ffffff;
+  --glass-fill: rgba(255, 255, 255, 0.6);
+  --glass-fill-strong: rgba(255, 255, 255, 0.9);
+  --glass-fill-bar: rgba(255, 255, 255, 0.8);
+  --glass-fill-banner: rgba(255, 255, 255, 0.95);
+  --glass-border: rgba(0, 0, 0, 0.10);
+  --focus-ring: 0 0 0 3px rgba(200, 16, 46, 0.4);
+}
+
+/* --------------------------------------------------------------------------
+   4. Renn-Modus (Glas reduzieren): deckende, kontraststarke Flächen ohne
+   Unschärfe – besser im Sonnenlicht, schont den Akku (dunkel: schwarz = OLED
+   aus). Gilt für jedes Design; dessen Akzentfarbe bleibt erhalten.
+   Schalter unter Mehr → Darstellung, automatisch bei "Transparenz reduzieren"
+   bzw. "Kontrast erhöhen" (js/ui/display.js).
+   -------------------------------------------------------------------------- */
+
+:root[data-glass="off"][data-mode="dark"] {
   --bg-base: #000000;
   --bg-image: none;
   --text: #ffffff;
   --text-muted: #d8dee9;
-  --glass-fill: #151a24;
-  --glass-fill-strong: #1c222d;
-  --glass-fill-bar: #151a24;
-  --glass-fill-banner: #151a24;
+  --glass-fill: #15181e;
+  --glass-fill-strong: #1c2027;
+  --glass-fill-bar: #15181e;
+  --glass-fill-banner: #15181e;
   --glass-sheen: none;
   --glass-filter: none;
   --glass-border: rgba(255, 255, 255, 0.45);
@@ -112,11 +420,46 @@
   --field-fill: #000000;
   --field-border: rgba(255, 255, 255, 0.60);
   --switch-off: #4a5160;
+  --statusbar-scrim: none;
 }
 
-/* Browser ohne backdrop-filter: Glas deckender, damit Text lesbar bleibt */
+:root[data-glass="off"][data-mode="light"] {
+  --bg-base: #ffffff;
+  --bg-image: none;
+  --text: #000000;
+  --text-muted: #30343a;
+  --glass-fill: #ffffff;
+  --glass-fill-strong: #ffffff;
+  --glass-fill-bar: #ffffff;
+  --glass-fill-banner: #ffffff;
+  --glass-sheen: none;
+  --glass-filter: none;
+  --glass-border: rgba(0, 0, 0, 0.55);
+  --glass-edge: transparent;
+  --glass-shadow: none;
+  --pressed: rgba(0, 0, 0, 0.10);
+  --separator: rgba(0, 0, 0, 0.28);
+  --field-fill: #ffffff;
+  --field-border: rgba(0, 0, 0, 0.60);
+  --switch-off: #9aa0aa;
+  /* Weisse Statusleiste auf Weiss wäre unsichtbar → schwarzer Streifen */
+  --statusbar-scrim: linear-gradient(180deg, #000000 0%, #000000 calc(100% - 10px), rgba(0, 0, 0, 0) 100%);
+}
+
+/* --------------------------------------------------------------------------
+   5. Sim-Modus und Fallbacks
+   -------------------------------------------------------------------------- */
+
+/* Sim-Modus: orange Leiste oben (siehe .sim-bar in app.css) */
+:root.sim {
+  --sim-bar-height: 32px;
+}
+
+/* Browser ohne backdrop-filter: Glas deckender, damit Text lesbar bleibt
+   (nach den Designs, damit es sie übersteuert; Renn-Modus bleibt stärker). */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  :root {
+  :root,
+  [data-theme][data-mode] {
     --glass-fill: var(--glass-fill-strong);
     --glass-fill-bar: var(--glass-fill-strong);
     --glass-fill-banner: var(--glass-fill-strong);

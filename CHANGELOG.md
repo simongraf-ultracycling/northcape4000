@@ -4,6 +4,30 @@ Alle Änderungen an der App. Format angelehnt an [Keep a Changelog](https://keep
 Versionen nach [SemVer](https://semver.org/lang/de/). Die Versionsnummer steht ausschliesslich in
 `js/version.js` und wird bei jeder Änderung erhöht.
 
+## [0.2.0] – 2026-10-05
+
+### Neu
+
+- Fünf Designs zur Wahl unter Mehr → Darstellung, jedes mit Dunkel- und Hellmodus:
+  **Polarnacht** (Nordlicht-Blau, viel Glas – bisheriges Design), **Mitternachtssonne**
+  (warm, Goldgelb, runde Schrift), **Fjord** (Tiefgrün und Nebel), **Graphit** (kantig,
+  Signalgelb, wenig Glas, Titel in Monospace) und **Alpen** (Schwarz/Weiss/Rot,
+  Serifen-Titel).
+- Erscheinungsbild Dunkel, Hell oder Automatisch (folgt der iPhone-Einstellung);
+  Standard bleibt Dunkel mit Polarnacht.
+- Renn-Modus gibt es jetzt auch hell (weisse, deckende Flächen, schwarze Schrift); er
+  gilt für jedes Design und behält dessen Akzentfarbe.
+- Vorschau-Kacheln und Vorschau-Karte in der Darstellungs-Auswahl.
+
+### Geändert
+
+- `css/tokens.css` neu gegliedert: Grundwerte, gemeinsame Werte je Modus, je Design ein
+  Form-Block und je ein Farbblock für Dunkel und Hell, Renn-Modus (dunkel/hell).
+- Im Hellmodus wird der Bereich hinter der iOS-Statusleiste leicht abgedunkelt, damit Uhr
+  und Akku lesbar bleiben.
+- `tools/check.mjs` prüft, dass jedes Design in `js/ui/display.js`, `js/boot.js` und
+  `css/tokens.css` (Dunkel und Hell, alle Farbwerte) vorhanden ist.
+
 ## [0.1.0] – 2026-10-05
 
 Etappe 1: Grundgerüst.

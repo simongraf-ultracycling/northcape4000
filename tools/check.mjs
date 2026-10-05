@@ -63,6 +63,27 @@ for (const f of [...jsFiles, 'index.html', 'manifest.webmanifest']) {
   if (read(f).includes('ß')) fail(`${f}: Schweizer Schreibweise – "ss" statt "ß"`);
 }
 
+// --- Designs: js/ui/display.js ↔ js/boot.js ↔ css/tokens.css ---------------------
+const themeIds = [...read('js/ui/display.js').matchAll(/\{ id: '([a-z]+)', name: '[^']+', description:/g)].map((m) => m[1]);
+if (!themeIds.length) fail('js/ui/display.js: THEMES nicht gefunden');
+const bootSrc = read('js/boot.js');
+const tokensSrc = read('css/tokens.css');
+const THEME_COLOR_TOKENS = ['--bg-base', '--bg-image', '--text', '--text-muted', '--accent', '--accent-fill', '--accent-soft', '--text-on-accent', '--glass-fill', '--glass-fill-strong', '--glass-fill-bar', '--glass-fill-banner', '--focus-ring'];
+for (const id of themeIds) {
+  if (!bootSrc.includes(`'${id}'`)) fail(`js/boot.js: Design "${id}" fehlt in der Liste THEMES`);
+  if (!tokensSrc.includes(`[data-theme="${id}"] {`) && !tokensSrc.includes(`[data-theme="${id}"]\n`)) fail(`css/tokens.css: Grundblock [data-theme="${id}"] fehlt`);
+  for (const mode of ['dark', 'light']) {
+    const selector = `[data-theme="${id}"][data-mode="${mode}"]`;
+    const start = tokensSrc.indexOf(selector);
+    if (start < 0) {
+      fail(`css/tokens.css: Block ${selector} fehlt`);
+      continue;
+    }
+    const block = tokensSrc.slice(start, tokensSrc.indexOf('}', start));
+    for (const token of THEME_COLOR_TOKENS) if (!block.includes(`${token}:`)) fail(`css/tokens.css: ${selector} definiert ${token} nicht`);
+  }
+}
+
 // --- Repository-Hygiene --------------------------------------------------------------
 const tracked = execFileSync('git', ['ls-files'], { cwd: root, encoding: 'utf8' }).split('\n');
 for (const f of tracked) if (/\.(gpx|fit)$/i.test(f) || /(^|\/)private\//.test(f)) fail(`${f}: darf nicht ins Repository`);

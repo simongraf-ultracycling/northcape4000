@@ -1,5 +1,6 @@
 /* Frühstart – klassisches Skript, läuft vor allen Modulen und vor dem ersten Bild.
- * 1. Darstellung sofort setzen (Renn-Modus, Sim-Markierung) – kein Aufblitzen.
+ * 1. Darstellung sofort setzen (Design, Hell/Dunkel, Renn-Modus, Sim-Markierung)
+ *    – kein Aufblitzen.
  * 2. Frühe Fehler sammeln, bis js/log.js übernimmt.
  * 3. Notfall-Anzeige, falls die App nicht startet (z.B. defektes Update im
  *    Cache): mit Knopf "Cache leeren und neu laden".
@@ -17,11 +18,26 @@
     }
   }
 
-  var forced = false;
-  try {
-    forced = matchMedia('(prefers-reduced-transparency: reduce)').matches || matchMedia('(prefers-contrast: more)').matches;
-  } catch (e) {}
-  if (read('raceMode') === true || forced) root.setAttribute('data-glass', 'off');
+  function media(query) {
+    try {
+      return matchMedia(query).matches;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // Design und Erscheinungsbild (wie js/ui/display.js; Liste dort = Liste hier)
+  var THEMES = ['polarnacht', 'mitternachtssonne', 'fjord', 'graphit', 'alpen'];
+  var theme = read('theme');
+  if (THEMES.indexOf(theme) < 0) theme = 'polarnacht';
+  var mode = read('colorMode');
+  if (mode === 'auto') mode = media('(prefers-color-scheme: dark)') ? 'dark' : 'light';
+  else if (mode !== 'light') mode = 'dark';
+  root.setAttribute('data-theme', theme);
+  root.setAttribute('data-mode', mode);
+
+  var forced = media('(prefers-reduced-transparency: reduce)') || media('(prefers-contrast: more)');
+  root.setAttribute('data-glass', read('raceMode') === true || forced ? 'off' : 'on');
   if (read('simMode') === true) root.classList.add('sim');
 
   // --- Frühe Fehler sammeln ---
