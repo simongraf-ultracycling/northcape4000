@@ -75,6 +75,22 @@ evtl. trotzdem als "Secret" – das ist erwartet). Zusätzlicher Schutz:
 4. In der App erscheint (beim nächsten Öffnen bzw. spätestens nach 30 Minuten) das Banner
    **"Neue Version – tippen zum Laden"**. Sofort prüfen: Mehr → Debug → "Nach Update suchen".
 
+## Fehlerbehebung
+
+**Update erscheint nicht in der App.** In der App unter Mehr → Debug → "Nach Update suchen"
+tippen. Steht dort "Aktuell (Server: v…)" mit der alten Nummer, ist die neue Version noch
+nicht veröffentlicht (siehe nächster Punkt).
+
+**Veröffentlichung hängt.** GitHub → Repository → **Actions** → "pages build and
+deployment" → obersten Lauf öffnen. Steht er lange auf "Queued": "Cancel workflow", dann
+"Re-run all jobs". Hilft das nicht, löst jeder neue Commit auf `main` einen neuen Lauf aus
+(z.B. diese Datei auf github.com bearbeiten und speichern). Bleibt auch der neue Lauf
+hängen, hat GitHub eine Störung: [githubstatus.com](https://www.githubstatus.com)
+("Actions", "Pages") – dann hilft nur warten.
+
+**App startet nicht mehr.** Nach 15 Sekunden erscheint eine Notfall-Anzeige mit
+"Cache leeren und neu laden" (braucht Netz). Erfasste Daten bleiben erhalten.
+
 ## Entwicklung
 
 Kein Build, kein npm. Lokal testen:
