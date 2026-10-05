@@ -1,7 +1,8 @@
 /* ==========================================================================
    Layout und Komponenten
-   Farben, Radien, Unschärfe, Schatten und Schriften NUR über Variablen aus
-   css/tokens.css – so sehen alle zehn Designs mit demselben Aufbau aus.
+   Farben, Radien, Schatten, Schriften und Formen NUR über Variablen aus
+   css/tokens.css – so funktionieren alle Designs und Farbmodi mit demselben
+   Aufbau.
    ========================================================================== */
 
 /* --- Grundlagen ----------------------------------------------------------- */
@@ -32,21 +33,11 @@ body {
   margin: 0;
   min-height: 100vh;
   min-height: 100dvh;
-  position: relative;
+  background: var(--bg-base);
   overscroll-behavior-y: none;
 }
 
-/* Ruhiger Hintergrund mit Farbverlauf (fix, damit das Glas darüber gleitet) */
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  background: var(--bg-image), var(--bg-base);
-  pointer-events: none;
-}
-
-/* Abdunklung hinter der iOS-Statusleiste (nur wo das Design sie braucht) */
+/* Abdunklung hinter der iOS-Statusleiste (nur bei hellen Farbmodi) */
 body::after {
   content: "";
   position: fixed;
@@ -93,25 +84,19 @@ summary,
   box-shadow: var(--focus-ring);
 }
 
-/* --- Glas ----------------------------------------------------------------- */
+/* Symbole: Strichstärke und Linienenden je Design */
+svg {
+  stroke-width: var(--icon-stroke);
+  stroke-linecap: var(--icon-cap);
+  stroke-linejoin: var(--icon-join);
+}
+
+/* --- Flächen (Karten, Listen) ---------------------------------------------- */
 
 .glass {
-  background: var(--glass-sheen), var(--glass-fill);
-  -webkit-backdrop-filter: var(--glass-filter);
-  backdrop-filter: var(--glass-filter);
-  border: 1px solid var(--glass-border);
-  box-shadow: inset 0 1px 0 var(--glass-edge), var(--glass-shadow);
-}
-
-/* Schwebende Bedienelemente: Inhalt scrollt darunter durch → etwas deckender */
-.tabbar.glass,
-.chip.glass {
-  background: var(--glass-sheen), var(--glass-fill-bar);
-}
-
-.banner.glass,
-.toast.glass {
-  background: var(--glass-sheen), var(--glass-fill-banner);
+  background: var(--card-sheen), var(--card-fill);
+  border: 1px solid var(--card-border);
+  box-shadow: var(--card-shadow);
 }
 
 /* --- Sim-Leiste (deutlich sichtbar, deckt auch die Statusleiste ab) ------- */
@@ -141,38 +126,36 @@ summary,
   display: flex;
 }
 
-/* --- Ränder oben und unten: weich verschwommen statt Leisten (wie iOS 26) -- */
+/* --- Kopf- und Fussbereich: deckend in der Hintergrundfarbe --------------- */
 
-/* Inhalt, der unter Titel bzw. Tab-Leiste scrollt, verschwimmt und blendet in
-   die Hintergrundfarbe aus; zur Bildschirmmitte hin läuft der Effekt sanft aus. */
-.top-edge,
-.bottom-edge {
+/* Kein Verlauf, keine Unschärfe: Inhalt verschwindet sauber unter dem Titel
+   bzw. unter der Tab-Leiste. Beim Scrollen erscheint oben eine feine Linie. */
+.top-cover,
+.bottom-cover {
   position: fixed;
   z-index: 29;
   left: 0;
   right: 0;
-  -webkit-backdrop-filter: var(--edge-filter);
-  backdrop-filter: var(--edge-filter);
+  background: var(--bg-base);
   pointer-events: none;
 }
 
-.top-edge {
+.top-cover {
   top: 0;
-  height: calc(env(safe-area-inset-top) + var(--sim-bar-height) + var(--header-height) + 36px);
-  background: linear-gradient(180deg, var(--edge-tint) 0%, var(--edge-tint) 70%, transparent 100%);
-  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 72%, transparent 100%);
-  mask-image: linear-gradient(180deg, #000 0%, #000 72%, transparent 100%);
+  height: calc(env(safe-area-inset-top) + var(--sim-bar-height) + var(--header-height) + var(--space-xs));
+  transition: box-shadow 0.2s ease;
 }
 
-.bottom-edge {
+:root.scrolled .top-cover {
+  box-shadow: 0 1px 0 var(--separator);
+}
+
+.bottom-cover {
   bottom: 0;
-  height: calc(var(--tabbar-inset) + var(--tabbar-height) + 28px);
-  background: linear-gradient(0deg, var(--edge-tint) 0%, var(--edge-tint) 40%, transparent 100%);
-  -webkit-mask-image: linear-gradient(0deg, #000 0%, #000 45%, transparent 100%);
-  mask-image: linear-gradient(0deg, #000 0%, #000 45%, transparent 100%);
+  height: calc(var(--tabbar-inset) + var(--tabbar-height) + var(--space-s));
 }
 
-/* --- Kopfzeile: Titel als Text, Bedienelemente als Glas-Pillen ------------- */
+/* --- Kopfzeile: Titel als Text, Bedienelemente als Pillen ------------------ */
 
 .app-header {
   position: fixed;
@@ -193,7 +176,7 @@ summary,
   font-family: var(--font-display);
   font-size: var(--font-size-title);
   font-weight: var(--font-weight-title);
-  letter-spacing: -0.01em;
+  letter-spacing: var(--title-tracking);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -230,6 +213,12 @@ summary,
   transition: transform 0.12s ease;
 }
 
+.chip.glass {
+  background: var(--bar-sheen), var(--bar-fill);
+  border-color: var(--bar-border);
+  box-shadow: var(--chip-shadow);
+}
+
 .chip-round {
   width: 44px;
   padding: 0;
@@ -260,9 +249,11 @@ summary,
   height: 34px;
   padding: 0 12px;
   border-radius: var(--radius-pill);
-  background: var(--field-fill);
+  background: var(--surface-2);
+  font-family: var(--font-numeric);
   font-size: var(--font-size-small);
   font-weight: var(--font-weight-strong);
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
@@ -312,16 +303,18 @@ summary,
 }
 
 .section-title {
-  font-size: var(--font-size-small);
-  font-weight: var(--font-weight-strong);
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  font-family: var(--section-font);
+  font-size: var(--section-size);
+  font-weight: var(--section-weight);
+  font-style: var(--section-style);
+  text-transform: var(--section-transform);
+  letter-spacing: var(--section-tracking);
+  color: var(--section-color);
   margin: var(--space-s) var(--space-m) calc(-1 * var(--space-xs));
 }
 
 .card {
-  border-radius: var(--radius-l);
+  border-radius: var(--radius-card);
   padding: var(--space-m) var(--space-m);
 }
 
@@ -330,7 +323,7 @@ summary,
 .login h1 {
   font-family: var(--font-display);
   font-weight: var(--font-weight-title);
-  letter-spacing: -0.01em;
+  letter-spacing: var(--title-tracking);
 }
 
 .card h2 {
@@ -372,7 +365,7 @@ summary,
 /* --- Listen / Zeilen (wie iOS-Einstellungen) ------------------------------- */
 
 .list {
-  border-radius: var(--radius-l);
+  border-radius: var(--radius-card);
   overflow: hidden;
 }
 
@@ -422,11 +415,16 @@ label.row:active {
   color: var(--text-muted);
 }
 
+/* Zeilen-Symbol: je nach Design frei, im Kreis, im Ring oder auf Plättchen */
 .row-icon {
-  width: 30px;
-  height: 30px;
   flex: none;
-  color: var(--accent);
+  width: var(--badge-size);
+  height: var(--badge-size);
+  padding: var(--badge-pad);
+  background: var(--badge-bg);
+  color: var(--badge-color);
+  border: var(--badge-border);
+  border-radius: var(--badge-radius);
 }
 
 .row-chevron {
@@ -452,7 +450,9 @@ label.row:active {
 
 .kv-value {
   text-align: right;
+  font-family: var(--font-numeric);
   font-weight: var(--font-weight-strong);
+  font-variant-numeric: tabular-nums;
   overflow-wrap: break-word;
   min-width: 0;
 }
@@ -464,7 +464,7 @@ label.row:active {
   color: var(--text-muted);
 }
 
-/* --- Knöpfe (Pillen) ---------------------------------------------------------- */
+/* --- Knöpfe (Pillen; Stil je Design) --------------------------------------- */
 
 .btn {
   display: inline-flex;
@@ -475,20 +475,20 @@ label.row:active {
   min-width: var(--tap-min);
   padding: 0 var(--space-l);
   border-radius: var(--radius-pill);
-  border: 1px solid var(--glass-border);
-  background: var(--glass-sheen), var(--glass-fill);
-  color: var(--text);
+  border: var(--btn-border-width) solid var(--btn-border);
+  background: var(--btn-bg);
+  color: var(--btn-text);
   font-size: var(--font-size);
-  font-weight: var(--font-weight-strong);
+  font-weight: var(--btn-weight);
   text-decoration: none;
   cursor: pointer;
-  box-shadow: inset 0 1px 0 var(--glass-edge);
+  box-shadow: var(--btn-shadow);
   transition: transform 0.12s ease, filter 0.12s ease;
 }
 
 .btn:active {
   transform: scale(0.97);
-  filter: brightness(1.12);
+  filter: brightness(1.1);
 }
 
 .btn[disabled] {
@@ -502,9 +502,9 @@ label.row:active {
 }
 
 .btn-primary {
-  background: var(--accent-fill);
-  border-color: transparent;
-  color: var(--text-on-accent);
+  background: var(--btn-primary-bg);
+  border-color: var(--btn-primary-border);
+  color: var(--btn-primary-text);
 }
 
 .btn-danger {
@@ -628,7 +628,7 @@ label.row:active {
   font-weight: var(--font-weight-strong);
 }
 
-/* --- Untere Tab-Leiste: Glas-Pille, konzentrisch zu den Bildschirmecken ---- */
+/* --- Untere Tab-Leiste: Pille, konzentrisch zu den Bildschirmecken --------- */
 
 /* Abstand zu Rand und Boden = Eckradius des iPhones − halbe Leistenhöhe
    (--tabbar-inset in tokens.css); so verlaufen die Rundungen parallel. */
@@ -648,6 +648,12 @@ label.row:active {
   gap: 2px;
 }
 
+.tabbar.glass {
+  background: var(--bar-sheen), var(--bar-fill);
+  border-color: var(--bar-border);
+  box-shadow: var(--bar-shadow);
+}
+
 .tab {
   flex: 1;
   min-width: 0;
@@ -658,7 +664,7 @@ label.row:active {
   align-items: center;
   justify-content: center;
   gap: 1px;
-  color: var(--text-muted);
+  color: var(--tab-text);
   text-decoration: none;
   font-size: var(--font-size-tiny);
   font-weight: var(--font-weight-strong);
@@ -675,8 +681,10 @@ label.row:active {
 }
 
 .tab[aria-current="page"] {
-  color: var(--accent);
-  background: var(--accent-soft);
+  color: var(--tab-active-text);
+  background: var(--tab-active-bg);
+  font-weight: var(--tab-active-weight);
+  box-shadow: inset 0 0 0 1px var(--tab-active-border), var(--tab-active-shadow);
 }
 
 /* --- Banner & Hinweise ------------------------------------------------------ */
@@ -695,11 +703,18 @@ label.row:active {
   pointer-events: none;
 }
 
+.banner.glass,
+.toast.glass {
+  background: var(--bar-fill);
+  border-color: var(--bar-border);
+  box-shadow: var(--shadow);
+}
+
 .banner {
   pointer-events: auto;
   width: 100%;
   min-height: 64px;
-  border-radius: var(--radius-l);
+  border-radius: var(--radius-card);
   display: flex;
   align-items: center;
   gap: var(--space-s);
@@ -719,7 +734,7 @@ label.row:active {
   flex: none;
 }
 
-.banner-accent {
+.banner-accent.glass {
   border-color: var(--accent);
 }
 
@@ -727,7 +742,7 @@ label.row:active {
   color: var(--accent);
 }
 
-.banner-danger {
+.banner-danger.glass {
   border-color: var(--danger);
 }
 
@@ -770,7 +785,7 @@ label.row:active {
 .login-card {
   width: 100%;
   max-width: 420px;
-  border-radius: var(--radius-l);
+  border-radius: var(--radius-card);
   padding: var(--space-l);
   display: flex;
   flex-direction: column;
@@ -782,7 +797,7 @@ label.row:active {
   height: 88px;
   border-radius: 22px;
   align-self: center;
-  box-shadow: var(--glass-shadow);
+  box-shadow: var(--shadow-soft);
 }
 
 .login h1 {
@@ -796,61 +811,134 @@ label.row:active {
 }
 
 /* Während der Anmeldung: App-Hülle ausblenden */
-body.logged-out .top-edge,
-body.logged-out .bottom-edge,
+body.logged-out .top-cover,
+body.logged-out .bottom-cover,
 body.logged-out .app-header,
 body.logged-out .tabbar,
 body.logged-out .view {
   display: none;
 }
 
+/* --- Darstellung: Farbmodus-Auswahl ---------------------------------------- */
+
+.mode-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-s);
+}
+
+.mode-tile {
+  position: relative;
+  min-height: 96px;
+  border-radius: var(--radius-card);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  padding: var(--space-s) var(--space-xs);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-strong);
+  text-align: center;
+  cursor: pointer;
+}
+
+.mode-tile input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.mode-tile:active {
+  transform: scale(0.97);
+}
+
+.mode-tile.is-selected {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+  color: var(--accent);
+}
+
+.mode-tile:has(input:focus-visible) {
+  box-shadow: var(--focus-ring);
+}
+
+/* Farbkreis: trägt selbst data-mode und zeigt Hintergrund und Karte */
+.mode-dot {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--bg-base);
+  border: 1px solid var(--separator-strong);
+  overflow: hidden;
+}
+
+.mode-dot::after {
+  content: "";
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--surface);
+}
+
+/* Automatisch: halb Weiss, halb Dunkelblau */
+.mode-dot-auto {
+  background: linear-gradient(90deg, #ffffff 0 50%, #0b1324 50% 100%);
+}
+
+.mode-dot-auto::after {
+  display: none;
+}
+
 /* --- Darstellung: Design-Auswahl ------------------------------------------- */
 
-/* Mini-Vorschau eines Designs: trägt selbst data-theme/data-mode und zeigt
-   dadurch dessen Farben, Glas und Schrift. */
+/* Mini-Vorschau eines Designs: trägt selbst data-theme/data-mode/data-scheme
+   und zeigt dadurch Titelschrift, Symbol-Strich und Knopf-Stil. */
 .swatch {
   position: relative;
   flex: none;
-  width: 60px;
-  height: 60px;
-  border-radius: var(--radius-m);
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
   overflow: hidden;
-  background: var(--bg-image), var(--bg-base);
-  border: 1px solid var(--glass-border);
+  background: var(--bg-base);
+  border: 1px solid var(--separator-strong);
   color: var(--text);
 }
 
 .swatch-aa {
   position: absolute;
-  top: 5px;
+  top: 6px;
   left: 9px;
   font-family: var(--font-display);
   font-weight: var(--font-weight-title);
   font-size: var(--font-size-large);
+  letter-spacing: var(--title-tracking);
   line-height: 1.2;
 }
 
-.swatch-dot {
+.swatch-icon {
   position: absolute;
-  top: 10px;
-  right: 9px;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: var(--accent-fill);
-  box-shadow: 0 0 0 2px var(--accent-soft);
+  top: 9px;
+  right: 8px;
+  width: 18px;
+  height: 18px;
+  color: var(--accent);
 }
 
-.swatch-card {
+.swatch-pill {
   position: absolute;
-  left: 7px;
-  right: 7px;
-  bottom: 8px;
-  height: 18px;
+  left: 9px;
+  right: 9px;
+  bottom: 9px;
+  height: 16px;
   border-radius: var(--radius-pill);
-  background: var(--glass-sheen), var(--glass-fill-bar);
-  border: 1px solid var(--glass-border);
-  box-shadow: inset 0 1px 0 var(--glass-edge);
+  background: var(--btn-primary-bg);
+  border: var(--btn-border-width) solid var(--btn-primary-border);
 }
 
 /* Auswahl-Zeile mit Häkchen (ganze Zeile tippbar) */
@@ -884,55 +972,6 @@ body.logged-out .view {
   transform: rotate(45deg);
 }
 
-/* Segment-Schalter (Dunkel | Hell | Automatisch) */
-.segmented {
-  display: flex;
-  gap: 4px;
-  padding: 4px;
-  border-radius: var(--radius-pill);
-}
-
-.segment {
-  position: relative;
-  flex: 1;
-  min-width: 0;
-  min-height: 64px;
-  border-radius: var(--radius-pill);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  font-size: var(--font-size-small);
-  font-weight: var(--font-weight-strong);
-  color: var(--text-muted);
-  cursor: pointer;
-}
-
-.segment input {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.segment svg {
-  width: 22px;
-  height: 22px;
-}
-
-.segment:active {
-  background: var(--pressed);
-}
-
-.segment.is-selected {
-  background: var(--accent-fill);
-  color: var(--text-on-accent);
-}
-
-.segment:has(input:focus-visible) {
-  box-shadow: var(--focus-ring);
-}
-
 .preview-row {
   display: flex;
   flex-wrap: wrap;
@@ -943,7 +982,7 @@ body.logged-out .view {
 /* --- Debug ------------------------------------------------------------------- */
 
 .result {
-  border-radius: var(--radius-m);
+  border-radius: var(--radius-inner);
   padding: var(--space-s) var(--space-m);
   background: var(--field-fill);
   font-size: var(--font-size-small);

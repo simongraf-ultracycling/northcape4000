@@ -86,6 +86,10 @@ export function setHeader({ title, back }) {
 }
 
 export function initShell() {
+  // Feine Linie unter dem Titel, sobald Inhalt darunter scrollt
+  const onScroll = () => document.documentElement.classList.toggle('scrolled', window.scrollY > 2);
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
   document.getElementById('header-status').addEventListener('click', () => {
     window.location.hash = '#mehr/debug';
   });

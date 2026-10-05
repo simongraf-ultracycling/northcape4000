@@ -4,6 +4,26 @@ Alle Änderungen an der App. Format angelehnt an [Keep a Changelog](https://keep
 Versionen nach [SemVer](https://semver.org/lang/de/). Die Versionsnummer steht ausschliesslich in
 `js/version.js` und wird bei jeder Änderung erhöht.
 
+## [0.5.0] – 2026-10-05
+
+### Geändert
+
+- Oben gibt es keine Unschärfe mehr: Kopf- und Fussbereich sind deckend in der
+  Hintergrundfarbe, Inhalt verschwindet sauber unter Titel und Tab-Leiste. Beim
+  Scrollen erscheint unter dem Titel eine feine Linie.
+- Farbe und Form sind getrennt einstellbar (Mehr → Darstellung):
+  - **Farbmodus** – neutral und flach, ohne Farbverläufe: **Weiss**, **Hellgrau**,
+    **Dunkelgrau**, **Dunkelblau** (Standard), **Schwarz** und **Automatisch** (folgt dem
+    iPhone: Weiss bei Hell, Dunkelblau bei Dunkel).
+  - **Design** – zehn ruhige Varianten der schlichten, runden Form, die sich in Schrift,
+    Knöpfen, Symbolen, Karten und Tabs unterscheiden statt nur in der Farbe: **Klar**
+    (Standard, wie iOS), **Rund**, **Fein**, **Kräftig**, **Klassik**, **Technik**,
+    **Avenir**, **Helvetica**, **Glas** und **Geometrisch**.
+- Renn-Modus behält den gewählten Farbmodus, macht alle Flächen deckend, Ränder
+  deutlicher, entfernt Schatten und setzt die Schrift auf maximalen Kontrast.
+- Bisherige Einstellungen werden übernommen (Dunkel → Dunkelblau, Hell → Weiss); die
+  Designs aus 0.4.0 entfallen (→ Klar).
+
 ## [0.4.0] – 2026-10-05
 
 ### Geändert

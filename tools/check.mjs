@@ -63,25 +63,34 @@ for (const f of [...jsFiles, 'index.html', 'manifest.webmanifest']) {
   if (read(f).includes('ß')) fail(`${f}: Schweizer Schreibweise – "ss" statt "ß"`);
 }
 
-// --- Designs: js/ui/display.js ↔ js/boot.js ↔ css/tokens.css ---------------------
-const themeIds = [...read('js/ui/display.js').matchAll(/\{ id: '([a-z]+)', name: '[^']+', description:/g)].map((m) => m[1]);
-if (!themeIds.length) fail('js/ui/display.js: THEMES nicht gefunden');
+// --- Designs und Farbmodi: js/ui/display.js ↔ js/boot.js ↔ css/tokens.css ----------
+const displaySrc = read('js/ui/display.js');
 const bootSrc = read('js/boot.js');
 const tokensSrc = read('css/tokens.css');
-const THEME_COLOR_TOKENS = ['--bg-base', '--bg-image', '--text', '--text-muted', '--accent', '--accent-fill', '--accent-soft', '--text-on-accent', '--glass-fill', '--glass-fill-strong', '--glass-fill-bar', '--glass-fill-banner', '--focus-ring'];
+// Inhalt des CSS-Blocks, der genau mit diesem Selektor beginnt
+const cssBlock = (selector) => {
+  const start = tokensSrc.indexOf(`${selector} {`);
+  return start < 0 ? null : tokensSrc.slice(start, tokensSrc.indexOf('}', start));
+};
+
+const themeIds = [...displaySrc.matchAll(/\{ id: '([a-z]+)', name: '[^']+', description:/g)].map((m) => m[1]);
+if (!themeIds.length) fail('js/ui/display.js: THEMES nicht gefunden');
+const THEME_TOKENS = ['--accent-l', '--accent-d', '--on-accent-l', '--on-accent-d'];
 for (const id of themeIds) {
   if (!bootSrc.includes(`'${id}'`)) fail(`js/boot.js: Design "${id}" fehlt in der Liste THEMES`);
-  if (!tokensSrc.includes(`[data-theme="${id}"] {`) && !tokensSrc.includes(`[data-theme="${id}"]\n`)) fail(`css/tokens.css: Grundblock [data-theme="${id}"] fehlt`);
-  for (const mode of ['dark', 'light']) {
-    const selector = `[data-theme="${id}"][data-mode="${mode}"]`;
-    const start = tokensSrc.indexOf(selector);
-    if (start < 0) {
-      fail(`css/tokens.css: Block ${selector} fehlt`);
-      continue;
-    }
-    const block = tokensSrc.slice(start, tokensSrc.indexOf('}', start));
-    for (const token of THEME_COLOR_TOKENS) if (!block.includes(`${token}:`)) fail(`css/tokens.css: ${selector} definiert ${token} nicht`);
-  }
+  const block = cssBlock(`[data-theme="${id}"]`);
+  if (!block) fail(`css/tokens.css: Block [data-theme="${id}"] fehlt`);
+  else for (const token of THEME_TOKENS) if (!block.includes(`${token}:`)) fail(`css/tokens.css: [data-theme="${id}"] definiert ${token} nicht`);
+}
+
+const modes = [...displaySrc.matchAll(/\{ id: '([a-z]+)', name: '[^']+', scheme: '(light|dark)' \}/g)].map((m) => ({ id: m[1], scheme: m[2] }));
+if (!modes.length) fail('js/ui/display.js: MODES nicht gefunden');
+const MODE_TOKENS = ['--bg-base', '--surface', '--surface-2', '--surface-bar', '--text', '--text-muted', '--separator', '--separator-strong', '--pressed', '--field-fill', '--field-border', '--switch-off'];
+for (const { id, scheme } of modes) {
+  if (!bootSrc.includes(`${id}: '${scheme}'`)) fail(`js/boot.js: Farbmodus "${id}" (${scheme}) fehlt in MODES`);
+  const block = cssBlock(`[data-mode="${id}"]`);
+  if (!block) fail(`css/tokens.css: Block [data-mode="${id}"] fehlt`);
+  else for (const token of MODE_TOKENS) if (!block.includes(`${token}:`)) fail(`css/tokens.css: [data-mode="${id}"] definiert ${token} nicht`);
 }
 
 // --- Repository-Hygiene --------------------------------------------------------------

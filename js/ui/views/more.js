@@ -73,7 +73,7 @@ export const moreView = {
         h(
           'nav',
           { class: 'list glass', 'aria-label': 'Einstellungen' },
-          linkRow('#mehr/darstellung', ICONS.display, 'Darstellung', 'Design, Dunkel/Hell, Renn-Modus'),
+          linkRow('#mehr/darstellung', ICONS.display, 'Darstellung', 'Farbmodus, Design, Renn-Modus'),
           linkRow('#mehr/simulation', ICONS.simulation, 'Simulation', 'Sim-Modus, simulierte Zeit, offline'),
           linkRow('#mehr/debug', ICONS.debug, 'Debug', 'Zustand, Tests, Fehlerprotokoll'),
         ),
