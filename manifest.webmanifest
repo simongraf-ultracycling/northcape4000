@@ -1,7 +1,7 @@
 {
-  "name": "NorthCape 4000",
-  "short_name": "NC4000",
-  "description": "Renn-App für das NorthCape 4000",
+  "name": "Bikepacking",
+  "short_name": "Bikepacking",
+  "description": "Begleit-App für lange Bikepacking-Touren",
   "id": "./",
   "start_url": "./",
   "scope": "./",

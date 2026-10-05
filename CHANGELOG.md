@@ -4,6 +4,34 @@ Alle Änderungen an der App. Format angelehnt an [Keep a Changelog](https://keep
 Versionen nach [SemVer](https://semver.org/lang/de/). Die Versionsnummer steht ausschliesslich in
 `js/version.js` und wird bei jeder Änderung erhöht.
 
+## [0.4.0] – 2026-10-05
+
+### Geändert
+
+- Die App ist jetzt allgemein für lange Bikepacking-Touren und Ultracycling-Rennen
+  gedacht (App-Name "Bikepacking"); das NorthCape 4000 2027 ist das erste Ziel.
+  Texte, Plan-Platzhalter und Sim-Testdaten sind entsprechend allgemein.
+- Oben gibt es keine Kopfzeilen-Pille mehr: Der obere Rand verschwimmt weich (wie in
+  iOS 26), der Titel steht als Text darauf; Zurück und Verbindung sind kleine runde
+  Glas-Pillen.
+- Die Tab-Leiste sitzt tiefer und verläuft konzentrisch zu den Bildschirmecken des
+  iPhones (Eckradius je Modell, Abstand = Eckradius − halbe Leistenhöhe).
+- Knöpfe, Eingabefelder, Segment-Schalter, Tabs und Toasts sind durchgehend runde Pillen.
+
+### Neu
+
+- Zehn schlichte Liquid-Glass-Designs, jedes dunkel und hell, klar unterscheidbar durch
+  Farbwelt, Glas (klar bis stark mattiert) und Akzent: **Polarnacht** (Standard),
+  **Gletscher**, **Wald**, **Sand**, **Abendrot**, **Rosé**, **Lavendel** (runde Schrift),
+  **Graphit** (monochrom), **Carbon** (Tiefschwarz, klares Glas) und **Mitternacht**
+  (Tintenblau und Gold).
+
+### Entfernt
+
+- Die Designs aus 0.3.0 (Neon-Velodrom, Beton, Terminal, Gazzetta, Plakat, Topo,
+  Mondrian, Holo, Skizze) samt ihrer Sonder-Variablen (Rahmenstile, harte Schatten,
+  Muster, schiefe Karten …). Wer eines davon gewählt hatte, landet bei Polarnacht.
+
 ## [0.3.0] – 2026-10-05
 
 ### Neu

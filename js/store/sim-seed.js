@@ -6,13 +6,13 @@ export function createSeed(now) {
   const meta = (t) => ({ clientTime: t, tzOffset: -new Date(t).getTimezoneOffset(), appVersion: 'testdaten', serverTime: t });
 
   return {
-    '': { name: 'NorthCape 4000 – Testdaten', ...meta(now - 3 * hour) },
+    '': { name: 'Beispiel-Tour – Testdaten', ...meta(now - 3 * hour) },
     'config/race': {
       value: {
-        name: 'NorthCape 4000',
-        start: 'Rovereto',
-        gates: ['München', 'Berlin', 'Gränna', 'Rovaniemi'],
-        finish: 'Nordkapp',
+        name: 'Beispiel-Tour',
+        start: 'Zürich',
+        checkpoints: ['Chur', 'Bormio', 'Bozen', 'Innsbruck'],
+        finish: 'Zürich',
       },
       ...meta(now - 3 * hour),
     },

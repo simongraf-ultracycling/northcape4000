@@ -1,6 +1,7 @@
 // Anmelde-Bildschirm (nur Firebase-Modus). Nach der ersten Anmeldung bleibt
 // die App dauerhaft angemeldet.
 
+import { APP_NAME } from '../../config.js';
 import * as store from '../../store.js';
 import { button, h } from '../dom.js';
 
@@ -61,7 +62,7 @@ export function renderLogin(container, { onSimMode }) {
         'div',
         { class: 'login-card glass' },
         h('img', { class: 'login-logo', src: 'icons/icon-192.png', alt: '' }),
-        h('h1', { text: 'NorthCape 4000' }),
+        h('h1', { text: APP_NAME }),
         h('p', { class: 'login-intro', text: 'Einmal anmelden – danach bleibt die App dauerhaft angemeldet.' }),
         offlineHint,
         h('form', { class: 'stack', novalidate: true, onSubmit }, field('E-Mail', email), field('Passwort', password), error, submit),

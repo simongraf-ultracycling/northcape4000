@@ -56,7 +56,7 @@ function preview() {
   return h(
     'section',
     { class: 'card glass stack' },
-    h('h2', { text: 'Rovereto → Nordkapp' }),
+    h('h2', { text: 'Tag 3 · 412 km' }),
     h('p', { class: 'muted', text: 'So wirken Titel, Texte, Knöpfe und Anzeigen im gewählten Design.' }),
     h(
       'div',

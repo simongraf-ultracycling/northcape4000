@@ -1,7 +1,8 @@
-// App-Hülle: Kopfzeile (Titel, Zurück, Verbindungsanzeige), Sim-Leiste,
+// App-Hülle: Kopfzeile (Titel, Zurück- und Verbindungs-Pille), Sim-Leiste,
 // Update-Banner und Hinweis bei gestörtem lokalem Speicher.
 
 import { clock } from '../clock.js';
+import { APP_NAME } from '../config.js';
 import { formatDateTime, formatNumber } from '../format.js';
 import { onLogChange } from '../log.js';
 import * as store from '../store.js';
@@ -39,7 +40,7 @@ function renderStatus(s) {
   const pending = Math.max(s.pendingSession, queuedWrites);
   const pills = [h('span', { class: `pill ${conn.cls}` }, h('span', { class: 'dot' }), h('span', { class: 'label', text: conn.text }))];
   if (pending > 0) pills.push(h('span', { class: 'pill is-warn' }, h('span', { class: 'label', text: `⇅ ${pending}` })));
-  clear(btn).append(...pills);
+  clear(btn).append(h('span', { class: 'chip glass' }, ...pills));
   btn.setAttribute('aria-label', `${conn.text}${s.offlineSimulated ? ' (simuliert)' : ''}${pending ? `, ${pending} Einträge nicht synchronisiert` : ''} – Details im Debug-Bereich`);
   // Simuliertes Offline deutlich markieren (wie der Sim-Modus)
   document.documentElement.classList.toggle('offline-sim', s.offlineSimulated);
@@ -70,13 +71,13 @@ function renderSimBar() {
 
 export function setHeader({ title, back }) {
   document.getElementById('header-title').textContent = title;
-  document.title = `${store.isSimMode() ? 'SIM · ' : ''}${title} – NorthCape 4000`;
+  document.title = `${store.isSimMode() ? 'SIM · ' : ''}${title} – ${APP_NAME}`;
   const header = document.getElementById('app-header');
   const backBtn = document.getElementById('header-back');
   header.classList.toggle('has-back', !!back);
   backBtn.hidden = !back;
   if (back) {
-    clear(backBtn).append(icon(ICONS.chevronLeft));
+    clear(backBtn).append(h('span', { class: 'chip chip-round glass' }, icon(ICONS.chevronLeft)));
     backBtn.setAttribute('aria-label', `Zurück zu ${back.label}`);
     backBtn.onclick = () => {
       window.location.hash = back.href;

@@ -11,16 +11,16 @@
 import * as store from '../store.js';
 
 export const THEMES = [
-  { id: 'polarnacht', name: 'Polarnacht', description: 'Liquid Glass in Nordlicht-Blau – das Original.' },
-  { id: 'synthwave', name: 'Neon-Velodrom', description: 'Synthwave: Neonröhren, Laser-Gitter, Sonnenuntergang, schräge Knöpfe.' },
-  { id: 'beton', name: 'Beton', description: 'Brutalismus: dicke Rahmen, harte Schatten, Giftgrün bzw. Knallgelb.' },
-  { id: 'terminal', name: 'Terminal', description: 'Grüner Phosphor-Bildschirm – hell als LCD-Velocomputer.' },
-  { id: 'gazzetta', name: 'Gazzetta', description: 'Rosa Sportzeitung mit Didot-Schlagzeilen – Maglia rosa.' },
-  { id: 'plakat', name: 'Plakat', description: 'Schweizer Plakatstil: Helvetica, rote Kopfzeile, angedockte Leisten.' },
-  { id: 'topo', name: 'Topo', description: 'Wanderkarte mit Höhenlinien, Seen und gestrichelten Wegen.' },
-  { id: 'mondrian', name: 'Mondrian', description: 'Farbblöcke wie das La-Vie-Claire-Trikot, Futura, dicke Linien.' },
-  { id: 'holo', name: 'Holo', description: 'Y2K-Hologramm: Regenbogen-Chrom, Blasen, Glühen.' },
-  { id: 'skizze', name: 'Skizze', description: 'Notizbuch mit Handschrift und Klebezetteln – dunkel als Wandtafel.' },
+  { id: 'polarnacht', name: 'Polarnacht', description: 'Nordlicht-Blau mit klarem Glas – das Original.' },
+  { id: 'gletscher', name: 'Gletscher', description: 'Eisweiss und Petrol, stark mattiertes Glas.' },
+  { id: 'wald', name: 'Wald', description: 'Tannengrün und Moos, lindgrüner Akzent.' },
+  { id: 'sand', name: 'Sand', description: 'Wüstensand und Bernstein, warm und weich.' },
+  { id: 'abendrot', name: 'Abendrot', description: 'Koralle, Pfirsich und Magenta wie ein Sonnenuntergang.' },
+  { id: 'rose', name: 'Rosé', description: 'Rosa und Himbeere, besonders runde Formen.' },
+  { id: 'lavendel', name: 'Lavendel', description: 'Flieder und Violett mit runder Schrift.' },
+  { id: 'graphit', name: 'Graphit', description: 'Neutrales Grau, schwarz-weiss ohne Farbe.' },
+  { id: 'carbon', name: 'Carbon', description: 'Tiefschwarz, ganz klares Glas, Signalorange.' },
+  { id: 'mitternacht', name: 'Mitternacht', description: 'Tintenblau und Gold.' },
 ];
 
 export const COLOR_MODES = [
