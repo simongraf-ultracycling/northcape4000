@@ -27,7 +27,7 @@
   }
 
   // Design und Erscheinungsbild (wie js/ui/display.js; Liste dort = Liste hier)
-  var THEMES = ['polarnacht', 'synthwave', 'beton', 'terminal', 'gazzetta', 'plakat', 'topo', 'mondrian', 'holo', 'skizze'];
+  var THEMES = ['polarnacht', 'gletscher', 'wald', 'sand', 'abendrot', 'rose', 'lavendel', 'graphit', 'carbon', 'mitternacht'];
   var theme = read('theme');
   if (THEMES.indexOf(theme) < 0) theme = 'polarnacht';
   var mode = read('colorMode');
@@ -39,6 +39,19 @@
   var forced = media('(prefers-reduced-transparency: reduce)') || media('(prefers-contrast: more)');
   root.setAttribute('data-glass', read('raceMode') === true || forced ? 'off' : 'on');
   if (read('simMode') === true) root.classList.add('sim');
+
+  // Eckradius des iPhone-Bildschirms (in Punkten) nach Bildschirmgrösse –
+  // die Tab-Leiste liegt konzentrisch dazu (--tabbar-inset in css/tokens.css).
+  // Unbekannte Geräte behalten den Standard aus tokens.css.
+  var RADII = {
+    '375x667': 0, '414x736': 0, // Geräte mit Home-Taste (SE, 8, 8 Plus)
+    '375x812': 39, '414x896': 40, '360x780': 44, '390x844': 47.33, '428x926': 53.33,
+    '393x852': 55, '430x932': 55, '402x874': 62, '440x956': 62, '420x912': 62,
+  };
+  var sw = Math.min(screen.width, screen.height);
+  var sh = Math.max(screen.width, screen.height);
+  var radius = RADII[sw + 'x' + sh];
+  if (typeof radius === 'number') root.style.setProperty('--screen-radius', radius + 'px');
 
   // --- Frühe Fehler sammeln ---
   var early = (window.__ncEarlyErrors = []);

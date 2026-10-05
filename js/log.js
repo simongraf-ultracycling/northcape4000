@@ -3,6 +3,7 @@
 // Zeitstempel in echter Gerätezeit (clock.realNow), auch im Sim-Modus.
 
 import { clock } from './clock.js';
+import { APP_NAME } from './config.js';
 import { readLocal, writeLocal } from './local.js';
 import { VERSION } from './version.js';
 
@@ -78,7 +79,7 @@ export function onLogChange(cb) {
 }
 
 export function formatLogText() {
-  const lines = [`NorthCape 4000 – Fehlerprotokoll (App ${VERSION})`, `Gerät: ${navigator.userAgent}`, ''];
+  const lines = [`${APP_NAME} – Fehlerprotokoll (App ${VERSION})`, `Gerät: ${navigator.userAgent}`, ''];
   for (const e of entries) {
     const time = new Date(e.t).toISOString();
     const count = e.count > 1 ? ` (${e.count}×)` : '';

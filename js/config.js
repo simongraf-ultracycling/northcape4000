@@ -2,6 +2,9 @@
 // ACHTUNG: Das Repository und die Website sind öffentlich. Hier nur Werte, die
 // ohnehin im Browser sichtbar sind – niemals Passwörter, Tokens oder Routen.
 
+// Name der App (Kopfzeile, Fenstertitel, Anmeldung, Fehlerprotokoll).
+export const APP_NAME = 'Bikepacking';
+
 // Firebase-Web-Konfiguration. Diese Werte sind kein Geheimnis; geschützt werden
 // die Daten durch firestore.rules (siehe README.md).
 export const FIREBASE_CONFIG = {
@@ -17,7 +20,7 @@ export const FIREBASE_CONFIG = {
 // Bereich lesen. Muss mit isOwner() in firestore.rules übereinstimmen.
 export const OWNER_UID = 'BhdmzQX0tIWNeN6C7ib1TIczwUk2';
 
-// Lange zufällige ID des Rennens: Alle Daten liegen unter races/{RACE_ID}/…
+// Lange zufällige ID der Tour bzw. des Rennens (aktuell: NorthCape 4000 2027): Alle Daten liegen unter races/{RACE_ID}/…
 // Hinweis: Weil diese Datei öffentlich ist, ist die ID hier NICHT geheim –
 // siehe "Offene Punkte" in CLAUDE.md (vor Etappe 6 klären).
 export const RACE_ID = 'U6y0GxvMOOfRX0fCCB4oQloDsocSlDxC';

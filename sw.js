@@ -1,4 +1,4 @@
-/* Service Worker – NorthCape 4000
+/* Service Worker – Bikepacking-App
  *
  * Version und Firebase-SDK-Version kommen als URL-Parameter (sw.js?v=…&fb=…),
  * gesetzt von js/update.js aus js/version.js – der EINZIGEN Stelle der

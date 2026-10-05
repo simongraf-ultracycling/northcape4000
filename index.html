@@ -13,15 +13,15 @@
       http-equiv="Content-Security-Policy"
       content="default-src 'self'; script-src 'self' https://www.gstatic.com; connect-src 'self' https://*.googleapis.com; img-src 'self' data: blob: https://www.google.com; style-src 'self'; font-src 'self'; manifest-src 'self'; worker-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'"
     />
-    <title>NorthCape 4000</title>
-    <meta name="description" content="Renn-App für das NorthCape 4000" />
+    <title>Bikepacking</title>
+    <meta name="description" content="Begleit-App für lange Bikepacking-Touren" />
     <meta name="robots" content="noindex, nofollow" />
 
     <!-- iOS Home-Screen-App -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="NC4000" />
+    <meta name="apple-mobile-web-app-title" content="Bikepacking" />
     <meta name="theme-color" content="#060a16" />
     <meta name="color-scheme" content="dark light" />
     <meta name="format-detection" content="telephone=no" />
@@ -42,14 +42,18 @@
       <span id="sim-bar-time"></span>
     </div>
 
-    <header class="app-header glass" id="app-header">
+    <!-- Oberer Rand: Inhalt verschwimmt unter dem Titel (keine Leiste) -->
+    <div class="top-edge" aria-hidden="true"></div>
+
+    <header class="app-header" id="app-header">
       <button class="header-back" id="header-back" type="button" hidden></button>
-      <h1 class="header-title" id="header-title">NorthCape 4000</h1>
+      <h1 class="header-title" id="header-title">Bikepacking</h1>
       <button class="header-status" id="header-status" type="button" aria-label="Verbindung – Details im Debug-Bereich"></button>
     </header>
 
     <main class="view" id="view" tabindex="-1"></main>
 
+    <div class="bottom-edge" aria-hidden="true"></div>
     <div class="banner-area" id="banner-area" aria-live="polite"></div>
 
     <nav class="tabbar glass" id="tabbar" aria-label="Hauptnavigation">

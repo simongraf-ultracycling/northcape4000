@@ -1,7 +1,8 @@
-# NorthCape 4000 – Renn-App
+# Bikepacking – Begleit-App für lange Touren
 
-PWA für das NorthCape 4000 (Start 24. Juli 2027 in Rovereto, Ziel Nordkapp).
-Läuft als Home-Screen-App auf dem iPhone, komplett offline-fähig, Daten in Firebase.
+PWA für lange Bikepacking-Touren und Ultracycling-Rennen – erstes grosses Ziel ist das
+NorthCape 4000 (Start 24. Juli 2027 in Rovereto, Ziel Nordkapp). Läuft als
+Home-Screen-App auf dem iPhone, komplett offline-fähig, Daten in Firebase.
 
 **App:** https://simongraf-ultracycling.github.io/northcape4000/
 
@@ -117,6 +118,6 @@ python3 -m http.server 8080      # im Repository-Ordner
 ## Datenschutz
 
 - Kein Tracking, keine Analyse-Dienste.
-- Die offizielle NC4000-Route und eigene POIs liegen ausschliesslich im privaten
+- Offizielle Rennrouten (z.B. NC4000) und eigene POIs liegen ausschliesslich im privaten
   Firebase-Bereich (`races/{raceId}/private/**`) – nie im Repository.
 - Follower sehen später nur, was unter `races/{raceId}` ausserhalb von `private` liegt.

@@ -1,20 +1,26 @@
-# NorthCape 4000 – Renn-App
+# Bikepacking – Begleit-App für lange Touren und Ultracycling-Rennen
 
 Dauerhafte Projektgrundlage. Vor jeder Änderung lesen; bei Änderungen an Architektur,
 Regeln oder Etappen-Status hier nachführen.
 
 ## Kontext
 
-Simon (Ultracycler aus der Schweiz) fährt am **24. Juli 2027** das **NorthCape 4000**,
-unsupported, Start in **Rovereto**. Pflicht-Gates: **München, Berlin, Gränna, Rovaniemi**,
-Ziel **Nordkapp**. Es gibt Mindest- und Maximalzeiten bzw. Zeitfenster pro Gate (für 2027
-noch nicht publiziert → müssen konfigurierbar sein). Das offizielle Tracking (WHIP) läuft
-als App auf Simons iPhone, Garmin LiveTrack auf seinem Garmin.
+Simon (Ultracycler aus der Schweiz) nutzt die App für **lange Bikepacking-Touren und
+Ultracycling-Rennen** (mehrere Tage bis Wochen, unsupported). Sie ist darum allgemein
+gehalten: Tour bzw. Rennen, Start, Kontrollpunkte (Gates/Checkpoints) mit optionalen
+Zeitfenstern, Fähren, Ziel – alles konfigurierbar, nichts fest auf ein Rennen verdrahtet.
+App-Name: `APP_NAME` in `js/config.js` ("Bikepacking").
+
+**Erstes grosses Ziel:** das **NorthCape 4000** am **24. Juli 2027**, Start in
+**Rovereto**, Pflicht-Gates **München, Berlin, Gränna, Rovaniemi**, Ziel **Nordkapp**.
+Mindest- und Maximalzeiten bzw. Zeitfenster pro Gate sind für 2027 noch nicht publiziert
+(→ konfigurierbar). Das offizielle Tracking (WHIP) läuft als App auf Simons iPhone,
+Garmin LiveTrack auf seinem Garmin.
 
 Die App ist eine **PWA**, die Simon als Home-Screen-App auf dem iPhone nutzt:
 Statuswechsel (fahren, Pause, Hotel, schlafe, wach, losgefahren), Befindens-Regler, Karte
-mit Versorgungspunkten, Zeitplan mit Gates und Fähren, Statistiken. Follower verfolgen
-alles live über eine separate Seite mit geheimem Link.
+mit Versorgungspunkten, Zeitplan mit Kontrollpunkten und Fähren, Statistiken. Follower
+verfolgen alles live über eine separate Seite mit geheimem Link.
 
 ## Architektur
 
@@ -42,7 +48,7 @@ icons/                  App-Icons (erzeugt mit tools/make_icons.py)
 js/boot.js              Frühstart: Darstellung, frühe Fehler, Notfall-Anzeige
 js/app.js               Einstieg: Start, Login oder App
 js/version.js           VERSION und FIREBASE_SDK_VERSION – einzige Stelle
-js/config.js            Firebase-Konfiguration, OWNER_UID, RACE_ID
+js/config.js            APP_NAME, Firebase-Konfiguration, OWNER_UID, RACE_ID
 js/clock.js             Einzige Zeitquelle (clock.now / clock.realNow), Simulation
 js/log.js               Fehlerprotokoll (letzte 200 Einträge, lokal)
 js/local.js             Geräte-Speicher (localStorage), nur für Infrastruktur
@@ -67,9 +73,9 @@ tools/make_icons.py     Icons einmalig erzeugen (nur Python-Standardbibliothek)
   Cache-Grösse): Schreibvorgänge werden offline gespeichert und automatisch nachgeliefert,
   auch nach App-Neustart. Gelesene Dokumente (auch privat) bleiben offline verfügbar.
 - Datenstruktur `races/{raceId}/…`:
-  - `races/{raceId}` – Renn-Dokument (öffentlich per get)
+  - `races/{raceId}` – Dokument der Tour bzw. des Rennens (öffentlich per get)
   - `events/{id}` – Ereignisse (`addEvent(type, data)`, `subscribeEvents`)
-  - `config/{key}` – Renn-Konfiguration, Wert im Feld `value` (`getConfig`, `setConfig`, `subscribeConfig`)
+  - `config/{key}` – Tour-Konfiguration, Wert im Feld `value` (`getConfig`, `setConfig`, `subscribeConfig`)
   - `debug/{id}` – Test-Einträge aus dem Debug-Bereich
   - `private/{key}` – **nur Besitzer**: offizielle Route (GPX-Daten), eigene POIs (`getPrivate`, `setPrivate`)
 - Jeder Eintrag: `clientTime` (ms, aus `clock.now()`, **massgeblich für Auswertungen**),
@@ -105,10 +111,10 @@ tools/make_icons.py     Icons einmalig erzeugen (nur Python-Standardbibliothek)
 
 | # | Etappe | Status |
 |---|--------|--------|
-| 1 | Grundgerüst: App-Hülle, Liquid-Glass-Design, Offline/Updates, Datenschicht, Login, Regeln, Sim-Modus, Debug | ✅ erledigt (v0.1.0; v0.3.0: zehn Designs mit Dunkel/Hell) |
+| 1 | Grundgerüst: App-Hülle, Liquid-Glass-Design, Offline/Updates, Datenschicht, Login, Regeln, Sim-Modus, Debug | ✅ erledigt (v0.1.0; v0.4.0: allgemein für Bikepacking, zehn Liquid-Glass-Designs mit Dunkel/Hell) |
 | 2 | Status-Automat und Befindens-Regler mit Firebase-Sync | offen |
 | 3 | Karte: Testroute, Import der offiziellen GPX (nur privat!), Echtzeit-Standort, Versorgungspunkte, eigene POIs, Google-Maps-Knopf | offen |
-| 4 | Zeitplan: Gates, Zeitfenster, Fähren-Rechner | offen |
+| 4 | Zeitplan: Kontrollpunkte/Gates, Zeitfenster, Etappen, Fähren-Rechner | offen |
 | 5 | Statistik: Tageswerte, Diagramme | offen |
 | 6 | Follower-Seite mit geheimem Link | offen |
 | 7 | Postbote (Apps Script): Garmin-Mail und LiveTrack | offen |
@@ -117,45 +123,51 @@ tools/make_icons.py     Icons einmalig erzeugen (nur Python-Standardbibliothek)
 
 ## Design-Grundsätze
 
-- Ursprungsstil **Liquid Glass** (iOS 26, Design Polarnacht): halbtransparente Flächen mit `backdrop-filter`
-  (Unschärfe + leichte Sättigung), feine helle Lichtkante oben, weiche Schatten, grosse
-  Rundungen, Kapsel-Formen. Kopfzeile und Tab-Leiste als schwebende Glas-Kapseln.
+- Stil **Liquid Glass** (iOS 26): halbtransparente Flächen mit `backdrop-filter`
+  (Unschärfe + Sättigung), feine helle Lichtkante oben, weiche Schatten, grosse Rundungen.
+  **Schlicht und modern, runde Pillen** (Knöpfe, Eingabefelder, Tabs, Segment-Schalter,
+  Toasts, Kopfzeilen-Bedienelemente). Simon mag das sehr; verspielte/verrückte Designs
+  (v0.3.0) kamen schlecht an und wurden entfernt.
+- **Oben keine Leiste:** Der obere Rand (`.top-edge`) verschwimmt weich (Unschärfe mit
+  Maske, Tönung `--edge-tint` in der Hintergrundfarbe), darauf der Titel als Text.
+  Zurück und Verbindungsanzeige sind kleine Glas-Pillen (`.chip`, `.chip-round`, 44 px
+  sichtbar, 56 px Tippfläche).
+- **Unten:** Tab-Leiste als schwebende Glas-Pille, **konzentrisch zu den Bildschirmecken**:
+  `js/boot.js` setzt `--screen-radius` je iPhone-Modell (nach Bildschirmgrösse), Abstand
+  zu Rand und Boden `--tabbar-inset` = Eckradius − halbe Leistenhöhe (mind. 10 px).
 - Dezenter, ruhiger Hintergrund mit Farbverlauf. **Dunkles Design als Standard.**
-- **Zehn Designs** (Mehr → Darstellung), bewusst radikal verschieden, jedes mit
-  **Dunkel- und Hellmodus**; dazu "Automatisch" (folgt `prefers-color-scheme`).
-  Standard: Polarnacht, Dunkel. Liquid Glass ist nur noch eines davon.
+- **Zehn Designs** (Mehr → Darstellung), alle nahe am Liquid-Glass-Original, aber klar
+  unterscheidbar durch Farbwelt, Glas (klar bis stark mattiert) und Akzent; jedes mit
+  **Dunkel- und Hellmodus**, dazu "Automatisch" (folgt `prefers-color-scheme`).
+  Standard: Polarnacht, Dunkel.
   | Design | Charakter |
   |---|---|
-  | `polarnacht` | Liquid Glass, Nordlicht-Blau (Original, Standard) |
-  | `synthwave` (Neon-Velodrom) | Synthwave: Laser-Gitter, Sonnenuntergang, Neon-Glühen, schräge Knöpfe |
-  | `beton` | Brutalismus: 3-px-Rahmen, harte Versatz-Schatten, Giftgrün/Knallgelb, keine Rundungen |
-  | `terminal` | grüner Phosphor-Bildschirm mit Scanlines; hell = LCD-Velocomputer; alles Monospace |
-  | `gazzetta` | rosa Sportzeitung, Didot-Schlagzeilen, Zeitungs-Linien |
-  | `plakat` | Schweizer Plakatstil, Helvetica, rote angedockte Kopfzeile, Leisten am Rand |
-  | `topo` | Wanderkarte mit Höhenlinien, gestrichelte Rahmen, Palatino kursiv |
-  | `mondrian` | La-Vie-Claire-Farbblöcke, 4-px-Linien, Futura, farbige Kartenbänder |
-  | `holo` | Y2K-Hologramm: Regenbogen-Chrom, Blasen, Glühen, Arial Rounded |
-  | `skizze` | Notizbuch mit Handschrift (Noteworthy/Marker Felt), Klebezettel, schiefe Karten; dunkel = Wandtafel |
+  | `polarnacht` | Nordlicht-Blau, klares Glas (Original, Standard) |
+  | `gletscher` | Eisweiss und Petrol, stark mattiertes Glas |
+  | `wald` | Tannengrün und Moos, lindgrüner Akzent |
+  | `sand` | Wüstensand und Bernstein |
+  | `abendrot` | Koralle, Pfirsich, Magenta |
+  | `rose` (Rosé) | Rosa und Himbeere, extra runde Formen |
+  | `lavendel` | Flieder und Violett, runde Schrift (`ui-rounded`) |
+  | `graphit` | neutrales Grau, monochrom (Akzent Weiss bzw. Schwarz) |
+  | `carbon` | Tiefschwarz, ganz klares Glas, Signalorange |
+  | `mitternacht` | Tintenblau und Gold |
 - Umsetzung: `<html data-theme="…" data-mode="dark|light" data-glass="on|off">`. In
-  `css/tokens.css`: gemeinsame Werte je Modus, Form-Grundwerte (`[data-theme]`), je Design
-  ein Form-Block und je ein Farbblock pro Modus (`[data-theme][data-mode]`).
-  Form-Variablen u.a.: `--border-width/-style`, `--separator-width`, `--radius-*`
-  (auch "handgezeichnete" Mehrfach-Radien), `--surface-inset`, `--glass-shadow` (auch harte
-  Schatten), `--text-glow`, `--bg-image` (Muster), `--glass-sheen(-2/-3)` (Kartenbänder,
-  Klebezettel), `--header-fill/-text/-accent`, `--tabbar-fill`, `--tab-*`, angedockte
-  Leisten (`--bar-gap`, `--header-gap`, `--tabbar-offset`, `--tabbar-safe-pad`),
-  `--card-tilt`, `--button-lift/-press`, `--icon-stroke`, Schriften für Titel, Abschnitte
-  und Knöpfe. `--accent` = Text/Symbole, `--accent-fill` = Fläche (darf ein Verlauf sein).
+  `css/tokens.css`: Grundwerte, gemeinsame Werte je Modus, Form-Grundwerte
+  (`[data-theme]`: Schrift, `--radius-s/m/l`, `--glass-filter`, `--edge-filter`), je Design
+  ein Form-Block und je ein Farbblock pro Modus (`[data-theme][data-mode]`: `--bg-base`,
+  `--bg-image`, Text, `--accent` = Text/Symbole, `--accent-fill` = Fläche, `--accent-soft`,
+  `--glass-fill(-strong/-bar/-banner)`, optional Rahmen/Lichtkante/Schatten).
   Nur iOS-Systemschriften verwenden (offline, keine Downloads).
 - Neues Design: Blöcke in `tokens.css`, Eintrag in `THEMES` (`js/ui/display.js`) und in
-  der Liste in `js/boot.js` – `tools/check.mjs` prüft das. Auch verrückte Designs müssen
-  lesbar bleiben (Kontrast, Tippflächen ≥ 56 px) und im Renn-Modus funktionieren.
+  der Liste in `js/boot.js` – `tools/check.mjs` prüft das. Jedes Design muss lesbar
+  bleiben (Kontrast, Tippflächen ≥ 56 px) und im Renn-Modus funktionieren.
 - Hellmodus: Hinter der iOS-Statusleiste (weisse Schrift) liegt eine leichte Abdunklung
   (`--statusbar-scrim`); auf dem iPhone kontrollieren.
 - **Lesbarkeit hat Vorrang:** Text und Bedienelemente immer kontraststark, auch auf Glas.
-- **Renn-Modus (Glas reduzieren)** unter Mehr → Darstellung: ersetzt Glas, Muster,
-  Glühen, Schatten und Schräglage durch deckende, kontraststarke Flächen (Sonnenlicht,
-  Akku) – dunkel schwarz, hell weiss, in jedem Design (Schrift, Formen, Akzent bleiben). Automatisch aktiv bei
+- **Renn-Modus (Glas reduzieren)** unter Mehr → Darstellung: ersetzt Glas, Unschärfe,
+  Farbverlauf und Schatten durch deckende, kontraststarke Flächen (Sonnenlicht, Akku) –
+  dunkel schwarz, hell weiss, in jedem Design (Schrift, Formen, Akzent bleiben). Automatisch aktiv bei
   `prefers-reduced-transparency` bzw. `prefers-contrast: more`.
 - Alle Farben, Radien, Unschärfe-Werte, Schatten als CSS-Variablen in `css/tokens.css`.
 - Touch: Tippflächen **mind. 56 px**, mit Handschuhen bedienbar, `touch-action: manipulation`,
@@ -168,6 +180,7 @@ tools/make_icons.py     Icons einmalig erzeugen (nur Python-Standardbibliothek)
   Tokens oder persönliche Daten ins Repository. Die offizielle NC4000-Route darf nicht
   weiterverbreitet werden; sie existiert nur im privaten Firebase-Bereich
   (`races/{raceId}/private/**`). Eine selbst erstellte Testroute über die Gate-Orte ist erlaubt.
+  Das gilt sinngemäss für jede offizielle Rennroute.
 - **Niemals** Google Analytics oder andere Tracking-/Analyse-Bausteine einbinden.
 - Alle Datenzugriffe nur über `js/store.js`. Alle Zeitabfragen nur über `clock.now()`.
 - Auswertungen immer auf `clientTime` basieren.
