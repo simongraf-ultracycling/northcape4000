@@ -1,21 +1,28 @@
-// Navigation über den Hash (#status, #karte, #plan, #statistik, #mehr,
-// #mehr/darstellung, #mehr/simulation, #mehr/debug).
-// Eine Ansicht ist ein Objekt { title, render(container) → Aufräum-Funktion? }.
+// Navigation über den Hash (#status, #karte, #karte/routen, #plan, #statistik,
+// #mehr, #mehr/darstellung, #mehr/simulation, #mehr/debug), optional mit
+// Parametern: #karte?km=412.
+// Eine Ansicht ist ein Objekt { title, render(container, params) → Aufräum-Funktion? }.
 
 import { clear } from './dom.js';
 import { setHeader } from './shell.js';
+import { closeSheet } from './sheet.js';
 import { displaySettingsView } from './views/display-settings.js';
 import { debugView } from './views/debug.js';
 import { moreView } from './views/more.js';
-import { mapView, planView, statsView } from './views/placeholders.js';
+import { mapView } from './views/map.js';
+import { statsView } from './views/placeholders.js';
+import { planView } from './views/plan.js';
+import { routesView } from './views/routes.js';
 import { simulationView } from './views/simulation.js';
 import { statusView } from './views/status.js';
 
 const BACK_TO_MORE = { href: '#mehr', label: 'Mehr' };
+const BACK_TO_MAP = { href: '#karte', label: 'Karte' };
 
 const ROUTES = {
   status: { tab: 'status', view: statusView },
   karte: { tab: 'karte', view: mapView },
+  'karte/routen': { tab: 'karte', view: routesView, back: BACK_TO_MAP },
   plan: { tab: 'plan', view: planView },
   statistik: { tab: 'statistik', view: statsView },
   mehr: { tab: 'mehr', view: moreView },
@@ -27,13 +34,15 @@ const ROUTES = {
 let cleanup = null;
 let started = false;
 
-function currentKey() {
-  const key = window.location.hash.replace(/^#\/?/, '');
-  return ROUTES[key] ? key : 'status';
+function current() {
+  const [path, query = ''] = window.location.hash.replace(/^#\/?/, '').split('?');
+  return { key: ROUTES[path] ? path : 'status', params: new URLSearchParams(query) };
 }
 
 function render() {
-  const route = ROUTES[currentKey()];
+  const { key, params } = current();
+  const route = ROUTES[key];
+  closeSheet();
   try {
     cleanup?.();
   } catch (err) {
@@ -48,7 +57,8 @@ function render() {
     else tab.removeAttribute('aria-current');
   }
   window.scrollTo(0, 0);
-  cleanup = route.view.render(main) || null;
+  document.body.dataset.view = key;
+  cleanup = route.view.render(main, params) || null;
 }
 
 export function startRouter() {

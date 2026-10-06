@@ -125,4 +125,26 @@ python3 -m http.server 8080      # im Repository-Ordner
 - Kein Tracking, keine Analyse-Dienste.
 - Offizielle Rennrouten (z.B. NC4000) und eigene POIs liegen ausschliesslich im privaten
   Firebase-Bereich (`races/{raceId}/private/**`) – nie im Repository.
-- Follower sehen später nur, was unter `races/{raceId}` ausserhalb von `private` liegt.
+- Follower sehen später nur, was unter `races/{raceId}` ausserhalb von `private` liegt –
+  dazu gehören die Status-Einträge **mit Standort** (abschaltbar unter Karte → Routen →
+  Standort). Solange die raceId im öffentlichen Code steht, kann sie jeder lesen, der sie
+  kennt (offener Punkt vor der Follower-Seite, siehe CLAUDE.md).
+- Karte: Die Kartenkacheln kommen direkt von den jeweiligen Anbietern (OpenStreetMap,
+  CyclOSM, OpenTopoMap, Esri, CARTO, Waymarked Trails, swisstopo). Diese sehen wie bei
+  jeder Online-Karte die IP-Adresse und den angezeigten Ausschnitt.
+- Versorgung: Zum Laden wird die vereinfachte Route abschnittweise an einen
+  Overpass-Server (OpenStreetMap) geschickt – nur Koordinaten, ohne Konto-Daten. Die Route
+  wird dort nicht gespeichert oder veröffentlicht.
+
+## Karte und Versorgung
+
+- Routen: Karte → Routen-Pille oben links → "GPX importieren" (Gesamtroute oder mehrere
+  Etappen-Dateien). Etappen lassen sich sortieren, umbenennen, löschen und zusammenfügen.
+  Zum Ausprobieren: "Testroute".
+- Versorgung (Supermärkte, Tankstellen, Bäckereien, Trinkwasser, Velowerkstätten,
+  Unterkünfte) unter Karte → Routen → "Versorgung laden" – einmal mit Netz, danach offline.
+- Offline: Kartenausschnitte, die einmal angesehen wurden, bleiben gespeichert (bis 6000
+  Kacheln). Für die Tour die Strecke vorher mit Netz in den gewünschten Zoomstufen
+  durchblättern. Ohne Netz und ohne gespeicherte Kacheln: Route und Punkte auf schlichtem
+  Hintergrund.
+- Eigene Punkte: lange auf die Karte tippen → "Eigenen Punkt hier speichern".

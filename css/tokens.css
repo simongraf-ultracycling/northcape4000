@@ -54,6 +54,24 @@
   --radius-inner: 14px;
   --card-border: transparent; /* Karten ohne Rand (Renn-Modus: mit) */
 
+  /* Karte: Farben auf den Kartenkacheln (gleich in allen Farbmodi) */
+  --map-route: #e5007e; /* Route: Magenta, auf allen Karten gut sichtbar */
+  --map-route-alt: #ff8c00; /* Tagesetappen abwechselnd */
+  --map-route-casing: #ffffff;
+  --map-gap: #5f6672; /* Lücken, z.B. Fähren (gestrichelt) */
+  --map-me: #0a84ff; /* eigener Standort */
+  --map-sleep: #3b3ad0; /* Schlafstopps */
+  --map-label: #ffffff; /* Beschriftungen auf der Karte */
+  --map-label-text: #111114;
+  --poi-supermarkt: #2b8a3e;
+  --poi-tankstelle: #e8590c;
+  --poi-baeckerei: #9c5221;
+  --poi-wasser: #1971c2;
+  --poi-velo: #6741d9;
+  --poi-unterkunft: #c2255c;
+  --poi-eigen: #0b8a6a; /* eigene Punkte */
+  --poi-24h: #fcc419; /* Ring um Punkte, die 24 h offen haben */
+
   /* Eckradius des Bildschirms (js/boot.js setzt ihn je nach iPhone-Modell).
      Die Tab-Leiste liegt konzentrisch dazu: Abstand zum Rand = Radius − halbe Höhe. */
   --screen-radius: 55px;

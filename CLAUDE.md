@@ -31,6 +31,10 @@ verfolgen alles live über eine separate Seite mit geheimem Link.
 - Reines HTML/CSS/JavaScript mit ES-Modulen. **Kein Build-Tool, kein npm, kein Framework.**
 - Firebase (Firestore + Authentication E-Mail/Passwort) über das offizielle modulare
   Firebase JS SDK vom CDN (gstatic), **Version fest gepinnt** in `js/version.js`.
+- Karte: **Leaflet** (ESM-Build + CSS) von jsDelivr, **Version fest gepinnt**
+  (`LEAFLET_VERSION` in `js/version.js`), vom Service Worker vorab gespeichert.
+  Kartenkacheln verschiedener Anbieter (Liste `BASE_LAYERS`/`TILE_OVERLAYS` in
+  `js/ui/map/layers.js`); Versorgung aus OpenStreetMap über Overpass.
 - Firestore-Standort: europe-west6, Datenbank: `(default)`.
 - Später: Google Apps Script als "Postbote" (Garmin-LiveTrack-Mail auslesen, LiveTrack
   abfragen), Scriptable-Skripte (Kurzbefehle, Widgets, Offline-Erinnerungen), Follower-Seite.
@@ -47,7 +51,7 @@ css/app.css             Layout und Komponenten, nur mit Variablen
 icons/                  App-Icons (erzeugt mit tools/make_icons.py)
 js/boot.js              Frühstart: Darstellung, frühe Fehler, Notfall-Anzeige
 js/app.js               Einstieg: Start, Login oder App
-js/version.js           VERSION und FIREBASE_SDK_VERSION – einzige Stelle
+js/version.js           VERSION, FIREBASE_SDK_VERSION, LEAFLET_VERSION – einzige Stelle
 js/config.js            APP_NAME, Firebase-Konfiguration, OWNER_UID, RACE_ID
 js/clock.js             Einzige Zeitquelle (clock.now / clock.realNow), Simulation
 js/log.js               Fehlerprotokoll (letzte 200 Einträge, lokal)
@@ -59,9 +63,24 @@ js/store/sim-backend.js        Lokaler Simulator (gleiche Schnittstelle)
 js/store/sim-seed.js           Testdaten für den Sim-Modus
 js/model/status.js      Status-Automat: Zustände, Übergänge, Abschnitte, Tageswerte
 js/model/befinden.js    Befinden: vier Regler 0–10, Bewertung gut/mittel/schlecht
+js/model/route.js       Routen-Modell: Etappen, Lücken (Fähren), km, nearest, Profil
+js/model/route-store.js Routen speichern/laden (privat), Etappen bearbeiten
+js/model/testroute.js   Selbst erstellte Testroute über die NC4000-Gate-Orte
+js/model/pois.js        Versorgung (Overpass), Kategorien, Speicherung (privat)
+js/model/opening-hours.js  OSM-Öffnungszeiten (Teilmenge): offen jetzt/bei Ankunft, 24 h
+js/model/plan.js        Tagesplanung: Fahrzeit, Schlafstopps, Ankunftszeiten
+js/model/my-pois.js     Eigene Punkte (privat, für alle Routen)
+js/geo/geo.js           Distanz, Vereinfachung, Höhenmeter, Polyline, Segment-Index
+js/geo/gpx.js           GPX lesen (im Web Worker: import.js, import-worker.js)
+js/geo/location.js      Standort (watch/get), im Sim-Modus simulierbar
 js/update.js            Service-Worker-Registrierung, Update-Erkennung, Cache leeren
 js/ui/display.js        Farbmodus, Renn-Modus, Statusleiste (setzt data-Attribute)
 js/ui/…                 Oberfläche: dom-Helfer, Symbole, Hülle, Router, Ansichten
+js/ui/sheet.js          Bottom-Sheet (Details, Auswahl)
+js/ui/views/map.js      Karte: Ebenen, Route, Versorgung, eigene Punkte, Voraus, Profil
+js/ui/views/routes.js   #karte/routen: GPX-Import, Etappen, Versorgung laden, Routen
+js/ui/views/plan.js     Plan: Tagesetappen mit Schlafstopps
+js/ui/map/              Leaflet laden, Kartenebenen, Höhenprofil, Punkt-Anzeige
 tools/check.mjs         Regel-Prüfung: node tools/check.mjs (nur Node-Bordmittel)
 .github/workflows/pages.yml   Prüfen + Veröffentlichen auf GitHub Pages (bei Push auf main)
 tools/make_icons.py     Icons einmalig erzeugen (nur Python-Standardbibliothek)
@@ -79,7 +98,10 @@ tools/make_icons.py     Icons einmalig erzeugen (nur Python-Standardbibliothek)
   - `events/{id}` – Ereignisse (`addEvent(type, data)`, `subscribeEvents`,
     Korrektur `updateEvent(id, felder)`):
     - `type: 'status'`, `data: { state, from }` – Zustände `fahren`, `pause`,
-      `versorgung`, `hotel`, `schlafen`, `wach` (`js/model/status.js`)
+      `versorgung`, `hotel`, `schlafen`, `wach` (`js/model/status.js`). Danach per
+      `updateEvent` ergänzt: `position` `{ lat, lon, acc, time, alt?, simulated? }` bzw.
+      `positionError` (`denied`, `unavailable`, `timeout`); abschaltbar (Einstellung
+      `savePosition`).
     - `type: 'befinden'`, `data: { muedigkeit, sitz, mental, motivation }` (0–10;
       Müdigkeit/Sitz: 0 gut, Mental/Motivation: 10 gut)
     - Korrekturen ergänzen das Dokument (`editedTime`, `editedVersion`); Zeit geändert:
@@ -87,21 +109,34 @@ tools/make_icons.py     Icons einmalig erzeugen (nur Python-Standardbibliothek)
       **Alle Auswertungen ignorieren `voided` und nehmen `clientTime`.**
   - `config/{key}` – Tour-Konfiguration, Wert im Feld `value` (`getConfig`, `setConfig`, `subscribeConfig`)
   - `debug/{id}` – Test-Einträge aus dem Debug-Bereich
-  - `private/{key}` – **nur Besitzer**: offizielle Route (GPX-Daten), eigene POIs (`getPrivate`, `setPrivate`)
+  - `private/{key}` – **nur Besitzer** (`getPrivate`, `setPrivate`, `deletePrivate`):
+    - `routes` – Routen-Index (Liste, aktive Route)
+    - `route-<id>` – Metadaten, Etappen (Name, km, Hm, Anzahl Abschnitte), Wegpunkte
+    - `routegeo-<id>-<stageId>-<n>` – Koordinaten als kodierte Polyline (`p`, 1e5) und
+      Höhen (`e`, 1 m), höchstens 20 000 Punkte je Dokument
+    - `pois-<routeId>` – Stand der Versorgung (Korridor, erledigte Abschnitte)
+    - `poisdata-<routeId>-<n>` – Versorgungspunkte als JSON-Text (`json`)
+    - `plan-<routeId>` – Planungs-Annahmen und festgelegte Schlafstopps (`pins`)
+    - `mypois` – eigene Punkte (für alle Routen)
 - Jeder Eintrag: `clientTime` (ms, aus `clock.now()`, **massgeblich für Auswertungen**),
   `tzOffset` (Minuten), `appVersion`, `serverTime` (serverTimestamp, nur Info; `null`
   solange nicht synchronisiert).
 - Schreiben gibt sofort `{ id, local, server }` zurück. `local` = lokal gespeichert,
   `server` = vom Server bestätigt (bleibt offline offen). **Oberfläche wartet nie auf `server`.**
-- Geräte-Einstellungen (Renn-Modus, Sim-Schalter …) über `store.settings`.
+- Geräte-Einstellungen (Renn-Modus, Sim-Schalter …) über `store.settings`. Karte:
+  `mapBase`, `mapOverlays`, `mapShow`, `mapPanel`, `mapViewport`, `mapLocate`.
 - Abonnements liefern Objekte `{ id, …Felder, pending }`; `pending` = noch nicht beim Server.
 
 ### Offline und Updates
 
-- `sw.js` cacht alle App-Dateien (Liste `APP_FILES`) und die Firebase-SDK-Dateien vorab
-  (Cache `nc4000-<VERSION>`). Die App startet komplett offline.
-- Die Seite registriert `sw.js?v=<VERSION>&fb=<SDK-Version>`; so ist `js/version.js` die
-  einzige Stelle der Versionsnummer.
+- `sw.js` cacht alle App-Dateien (Liste `APP_FILES`), die Firebase-SDK-Dateien und
+  Leaflet vorab (Cache `nc4000-<VERSION>`). Die App startet komplett offline.
+- Kartenkacheln: eigener Cache `nc4000tiles` (bleibt über Versionen erhalten), zuerst
+  aus dem Cache, höchstens 6000 Kacheln; nur Server aus `TILE_HOSTS` in `sw.js`.
+  Neuer Kartenserver = Eintrag in `layers.js`, `TILE_HOSTS` und CSP `img-src`
+  (`tools/check.mjs` prüft das).
+- Die Seite registriert `sw.js?v=<VERSION>&fb=<SDK-Version>&lf=<Leaflet-Version>`; so ist
+  `js/version.js` die einzige Stelle der Versionsnummern.
 - Update-Erkennung: `js/update.js` liest `js/version.js` direkt vom Server (Start, Rückkehr
   in die App, alle 30 min, Knopf im Debug). Neuere Version → neuer Service Worker lädt im
   Hintergrund → Banner "Neue Version – tippen zum Laden" → erst beim Tippen
@@ -123,8 +158,8 @@ tools/make_icons.py     Icons einmalig erzeugen (nur Python-Standardbibliothek)
 |---|--------|--------|
 | 1 | Grundgerüst: App-Hülle, Liquid-Glass-Design, Offline/Updates, Datenschicht, Login, Regeln, Sim-Modus, Debug | ✅ erledigt (v0.1.0; v0.4.0: allgemein für Bikepacking; v0.6.0: ein schlichtes Design, fünf neutrale Farbmodi, deckende Statusleiste) |
 | 2 | Status-Automat und Befindens-Regler mit Firebase-Sync | ✅ erledigt (v0.7.0: Status-Tab, Befinden 4 Regler, Verlauf mit Korrektur) |
-| 3 | Karte: Testroute, Import der offiziellen GPX (nur privat!), Echtzeit-Standort, Versorgungspunkte, eigene POIs, Google-Maps-Knopf | offen |
-| 4 | Zeitplan: Kontrollpunkte/Gates, Zeitfenster, Etappen, Fähren-Rechner | offen |
+| 3 | Karte: Testroute, Import der offiziellen GPX (nur privat!), Echtzeit-Standort, Versorgungspunkte, eigene POIs, Google-Maps-Knopf | ✅ erledigt (v0.8.0: 15 Hintergründe + Überlagerungen, Routen aus Gesamt-GPX oder Etappen, Versorgung aus OSM mit Öffnungszeiten/24 h, eigene Punkte, Höhenprofil, Standort bei Statuswechsel, Offline-Kacheln) |
+| 4 | Zeitplan: Kontrollpunkte/Gates, Zeitfenster, Etappen, Fähren-Rechner | teilweise (v0.8.0: Tagesetappen mit Schlafstopps im Tab Plan; offen: Gates mit Zeitfenstern, Fähren-Rechner) |
 | 5 | Statistik: Tageswerte, Diagramme | offen |
 | 6 | Follower-Seite mit geheimem Link | offen |
 | 7 | Postbote (Apps Script): Garmin-Mail und LiveTrack | offen |
@@ -169,6 +204,9 @@ tools/make_icons.py     Icons einmalig erzeugen (nur Python-Standardbibliothek)
   (Sonnenlicht). Automatisch aktiv bei `prefers-reduced-transparency` bzw.
   `prefers-contrast: more`.
 - Alle Farben, Radien, Schatten, Schriften als CSS-Variablen in `css/tokens.css`.
+  Karte: `--map-*` (Route, Lücken, Standort, Schlafstopps) und `--poi-*` (je Kategorie,
+  `--poi-24h` = Ring für 24 h geöffnet). Bedienelemente auf der Karte sind dieselben
+  Glas-Pillen (56 px) wie in der Kopfzeile.
 - Touch: Tippflächen **mind. 56 px**, mit Handschuhen bedienbar, `touch-action: manipulation`,
   Eingabefelder **mind. 16 px** (kein Auto-Zoom). Ganze Zeilen tippbar (Schalter).
 - iOS-Home-Screen: `viewport-fit=cover` (unten bis an den Rand), Safe-Area-Abstände,
@@ -212,10 +250,14 @@ tools/make_icons.py     Icons einmalig erzeugen (nur Python-Standardbibliothek)
 
 ## Hinweise für spätere Etappen
 
-- Firestore-Dokumente sind auf **1 MB** begrenzt → Route vereinfachen und/oder in
-  Abschnitte aufteilen (z.B. `private/route-001`, `private/route-002`, …).
-- Firestore erlaubt **keine verschachtelten Arrays** → Koordinaten als flaches Array
-  `[lat, lon, lat, lon, …]` oder als kodierter Polyline-String speichern.
+- Firestore-Dokumente sind auf **1 MB** begrenzt und erlauben **keine verschachtelten
+  Arrays** → umgesetzt (v0.8.0): Route vereinfacht (5 m) als Polyline-String in
+  Abschnitten (`routegeo-…`), Versorgung als JSON-Text in Abschnitten (`poisdata-…`).
+- Versorgung: Overpass bekommt die vereinfachte Route in Abschnitten (≤ 300 Punkte je
+  Abfrage) – die Route verlässt das Gerät nur als Abfrage an OpenStreetMap-Server, nie
+  öffentlich. Kategorien und Korridor in `js/model/pois.js`.
+- Gates mit Zeitfenstern (Etappe 4) können auf den Wegpunkten der Route (`type`
+  Start/Gate/Ziel) und auf `computePlan(...).eta(km)` aus `js/model/plan.js` aufbauen.
 - Private Inhalte nach dem Laden offline verfügbar halten: einmal per `getPrivate` laden;
   der Firestore-Cache ist unbegrenzt (keine automatische Bereinigung).
 - Tageswerte/Statistik über `clientTime` + `tzOffset` (Simon wechselt Zeitzonen: MESZ,
@@ -227,7 +269,8 @@ tools/make_icons.py     Icons einmalig erzeugen (nur Python-Standardbibliothek)
 
 - **raceId ist nicht geheim:** `RACE_ID` steht in `js/config.js` im öffentlichen
   Repository und auf der öffentlichen Website. Wer sie kennt, kann alle nicht-privaten
-  Daten lesen. Vor Etappe 6 (Follower-Seite) entscheiden, z.B.: echte Renn-raceId nicht im
+  Daten lesen – seit v0.8.0 auch den **Standort in Status-Einträgen** (Hinweis unter
+  Karte → Routen → Standort, dort abschaltbar). Vor Etappe 6 (Follower-Seite) entscheiden, z.B.: echte Renn-raceId nicht im
   Repository, sondern nur auf Simons Gerät bzw. in einem nur für den Besitzer lesbaren
   Dokument hinterlegen; die ID in `config.js` bleibt dann eine Test-ID.
 - Zeitfenster der Gates 2027 noch nicht publiziert (konfigurierbar in Etappe 4).
