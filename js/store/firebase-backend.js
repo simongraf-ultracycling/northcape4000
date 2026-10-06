@@ -247,6 +247,11 @@ export async function createBackend({ raceId, onConnection, onUser }) {
       return { local, server };
     },
 
+    remove(segments) {
+      const server = fs.deleteDoc(docRef(segments));
+      return { local: Promise.resolve(), server };
+    },
+
     async read(segments) {
       const ref = docRef(segments);
       let snap;

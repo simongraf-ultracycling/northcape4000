@@ -4,6 +4,65 @@ Alle Änderungen an der App. Format angelehnt an [Keep a Changelog](https://keep
 Versionen nach [SemVer](https://semver.org/lang/de/). Die Versionsnummer steht ausschliesslich in
 `js/version.js` und wird bei jeder Änderung erhöht.
 
+## [0.8.0] – 2026-10-06
+
+Etappe 3: Karte, Routen, Versorgung und Tagesplanung.
+
+### Neu
+
+- **Karte** (Tab "Karte") mit **15 Hintergründen**: Velo (CyclOSM), OpenStreetMap,
+  OpenStreetMap DE, OpenStreetMap FR, Humanitarian, OpenTopoMap, Esri Topo,
+  Esri Strassen, Satellit (Esri), CARTO Voyager, CARTO Hell, CARTO Dunkel,
+  swisstopo Landeskarte, swisstopo Luftbild und "Ohne Hintergrund". "Automatisch" wählt
+  Velo (CyclOSM) bzw. CARTO Dunkel passend zum Farbmodus. Dazu **Überlagerungen**:
+  Velorouten (Waymarked Trails), Relief (Schummerung), Orte und Grenzen (für Satellit).
+- Auf der Karte: Route mit Etappen und **Lücken** (z.B. Fähren, gestrichelt),
+  km-Marken je nach Zoom, Etappennummern, Wegpunkte/Gates aus den GPX-Dateien,
+  geplante **Schlafstopps**, Tagesetappen abwechselnd gefärbt (Schalter), eigener
+  Standort mit Richtung, Folgen-Modus, "Ganze Route zeigen". Route antippen → km-Info
+  (Höhe, Etappe, Ankunft, Höhenmeter bis dorthin, Google Maps).
+- Unten: **Lage auf der Route** (km, verbleibend, Etappe), **Voraus** – die nächsten
+  Versorgungspunkte mit Distanz, Ankunftszeit und "offen bei Ankunft" – und das
+  **Höhenprofil** (antippen markiert den Punkt auf der Karte).
+- **Routen** (Karte → Routen-Pille): GPX-Import einer Gesamtroute oder **mehrerer
+  Etappen** (auch mehrere Dateien auf einmal); Etappen umbenennen, sortieren,
+  löschen oder **zu einer Strecke zusammenfügen**. Lücken zwischen Etappen (Fähren)
+  zählen nicht als Strecke. Mehrere Routen speicherbar, eine ist aktiv.
+  Selbst erstellte **Testroute** Rovereto → München → Berlin → Gränna → Rovaniemi →
+  Nordkapp (7 Etappen, rund 3'450 km) zum Ausprobieren.
+- **Versorgung aus OpenStreetMap** entlang der Route: Supermärkte, Tankstellen,
+  Bäckereien, Trinkwasser, Velowerkstätten und Unterkünfte (Korridor einstellbar;
+  Unterkünfte in breiterem Korridor). Ladefortschritt, abbrechen und später fortsetzen.
+  **Öffnungszeiten** werden ausgewertet: offen jetzt, offen bei Ankunft, **24 h
+  geöffnet** hervorgehoben (goldener Ring) und als Filter "Nur 24 h geöffnet".
+- **Eigene Punkte:** lange auf die Karte tippen → "Dieser Ort" → als eigenen Punkt
+  speichern (Name, Notiz), bearbeiten, löschen. Erscheinen auf der Karte und in "Voraus".
+- **Google-Maps-Knopf** bei jedem Punkt (Velo-Navigation dorthin).
+- **Plan** (Tab "Plan"): **Tagesetappen mit Schlafstopps** – automatisch aus Start,
+  Tempo, Steigleistung, Fahrzeit, Pausen und Schlaf; jeder Schlafstopp lässt sich auf
+  einen km festlegen oder auf eine **Unterkunft in der Nähe** setzen ("Als
+  Schlafstopp"). Geplante Ankunft an Wegpunkten/Gates und im Ziel.
+- **Standort bei Statuswechsel:** Jeder Status-Eintrag bekommt die aktuelle Position
+  (`position`), bei Fehlern `positionError`. Abschaltbar unter Karte → Routen.
+- **Offline:** Die Kartenbibliothek (Leaflet 1.9.4) ist vorab gespeichert, angesehene
+  Kartenausschnitte werden gespeichert (bis 6000 Kacheln). Ohne Netz bleiben Route,
+  Punkte, Profil und Standort voll nutzbar – Hintergrund aus gespeicherten Kacheln oder
+  schlicht.
+
+### Technisches
+
+- Routen, Versorgung, Plan und eigene Punkte liegen **nur im privaten Bereich**
+  (`private/routes`, `route-…`, `routegeo-…`, `pois-…`, `poisdata-…`, `plan-…`,
+  `mypois`). Koordinaten als kodierte Polyline, in Abschnitten unter 1 MB.
+- GPX wird in einem Web Worker gelesen und vereinfacht (3D-Douglas-Peucker, 5 m);
+  Höhenmeter mit 5-m-Hysterese.
+- Für die Versorgung wird die vereinfachte Route in Abschnitten an Overpass
+  (OpenStreetMap) gesendet – nur Koordinaten, keine Konten-Daten.
+- Leaflet per jsDelivr mit fester Version (`LEAFLET_VERSION` in `js/version.js`),
+  Content-Security-Policy um Karten- und Overpass-Server ergänzt; `tools/check.mjs`
+  prüft, dass jeder Kartenserver in CSP und Service Worker eingetragen ist.
+- Neue Datenschicht-Funktion `store.deletePrivate(key)`.
+
 ## [0.7.0] – 2026-10-06
 
 Etappe 2: Status-Automat und Befinden.

@@ -11,6 +11,7 @@
 //   signIn(email, password), signOut()
 //   write(segments, fields)            → { local: Promise, server: Promise }
 //   update(segments, fields)           → wie write, Felder werden ergänzt
+//   remove(segments)                   → { local, server } – Dokument löschen
 //   read(segments)                     → Promise<{ id, exists, data, fromCache, pending }>
 //   watchDoc(segments, cb, onError)    → Abmelde-Funktion; cb(doc)
 //   watchCollection(segments, { orderBy, desc, limit }, cb, onError)
@@ -162,6 +163,14 @@ export async function createBackend({ ownerUid, onConnection, onUser }) {
     update(segments, fields) {
       const path = pathOf(segments);
       return store(path, { ...(docs[path]?.data || {}), ...copy(fields) });
+    },
+
+    remove(segments) {
+      const path = pathOf(segments);
+      delete docs[path];
+      persist();
+      notify(path);
+      return { local: Promise.resolve(), server: Promise.resolve() };
     },
 
     async read(segments) {

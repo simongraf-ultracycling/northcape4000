@@ -4,14 +4,15 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <!--
-      Content-Security-Policy: nur eigene Dateien, Firebase-SDK (gstatic) und
-      Google-APIs (Firestore, Anmeldung; www.google.com: Netz-Test von Firestore).
-      Neue externe Quellen (z.B. Karten-Kacheln, Bibliotheken) hier ergänzen.
+      Content-Security-Policy: nur eigene Dateien, Firebase-SDK (gstatic),
+      Google-APIs (Firestore, Anmeldung; www.google.com: Netz-Test von Firestore),
+      Leaflet (cdn.jsdelivr.net), Kartenkacheln (Hosts wie js/ui/map/layers.js)
+      und OpenStreetMap-Abfragen (Overpass). Neue externe Quellen hier ergänzen.
       Kein Tracking!
     -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self' https://www.gstatic.com; connect-src 'self' https://*.googleapis.com; img-src 'self' data: blob: https://www.google.com; style-src 'self'; font-src 'self'; manifest-src 'self'; worker-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'"
+      content="default-src 'self'; script-src 'self' https://www.gstatic.com https://cdn.jsdelivr.net; connect-src 'self' https://*.googleapis.com https://overpass-api.de https://overpass.kumi.systems https://overpass.private.coffee; img-src 'self' data: blob: https://www.google.com https://*.openstreetmap.org https://*.openstreetmap.de https://*.openstreetmap.fr https://*.opentopomap.org https://server.arcgisonline.com https://*.basemaps.cartocdn.com https://tile.waymarkedtrails.org https://wmts.geo.admin.ch; style-src 'self' https://cdn.jsdelivr.net; font-src 'self'; manifest-src 'self'; worker-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'"
     />
     <title>Bikepacking</title>
     <meta name="description" content="Begleit-App für lange Bikepacking-Touren" />

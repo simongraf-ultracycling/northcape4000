@@ -1,8 +1,9 @@
 // Service Worker und Updates.
 //
 // Ablauf:
-// 1. Beim Start wird sw.js?v=<VERSION>&fb=<SDK-Version> registriert. Der Service
-//    Worker cacht damit alle App- und SDK-Dateien unter dem Namen nc4000-<VERSION>.
+// 1. Beim Start wird sw.js?v=<VERSION>&fb=<SDK-Version>&lf=<Leaflet-Version>
+//    registriert. Der Service Worker cacht damit alle App-, SDK- und
+//    Leaflet-Dateien unter dem Namen nc4000-<VERSION>.
 // 2. Regelmässig (Start, Rückkehr in die App, alle 30 min) wird js/version.js
 //    direkt vom Server gelesen. Ist dort eine neuere Version, wird der Service
 //    Worker mit der neuen URL registriert → er lädt die neue Version im
@@ -11,7 +12,7 @@
 //    Laden". Erst beim Tippen: skipWaiting + Neuladen.
 
 import { logEntry } from './log.js';
-import { FIREBASE_SDK_VERSION, VERSION } from './version.js';
+import { FIREBASE_SDK_VERSION, LEAFLET_VERSION, VERSION } from './version.js';
 
 const CHECK_INTERVAL_MS = 30 * 60 * 1000;
 const listeners = new Set();
@@ -22,8 +23,8 @@ let registerError = null;
 let lastCheck = null; // { status, server, error }
 let reloadRequested = false;
 
-function swUrl(version, sdkVersion) {
-  return `./sw.js?v=${encodeURIComponent(version)}&fb=${encodeURIComponent(sdkVersion)}`;
+function swUrl(version, sdkVersion, leafletVersion) {
+  return `./sw.js?v=${encodeURIComponent(version)}&fb=${encodeURIComponent(sdkVersion)}&lf=${encodeURIComponent(leafletVersion)}`;
 }
 
 function versionOf(worker) {
@@ -80,8 +81,8 @@ function track(reg) {
   });
 }
 
-async function register(version, sdkVersion) {
-  const reg = await navigator.serviceWorker.register(swUrl(version, sdkVersion), { scope: './', updateViaCache: 'none' });
+async function register(version, sdkVersion, leafletVersion) {
+  const reg = await navigator.serviceWorker.register(swUrl(version, sdkVersion, leafletVersion), { scope: './', updateViaCache: 'none' });
   track(reg);
   registerError = null;
   emit();
@@ -109,7 +110,7 @@ export async function initServiceWorker() {
       track(existing);
       emit();
     } else {
-      await register(VERSION, FIREBASE_SDK_VERSION);
+      await register(VERSION, FIREBASE_SDK_VERSION, LEAFLET_VERSION);
     }
   } catch (err) {
     registerError = err.message || String(err);
@@ -151,11 +152,12 @@ export function checkForUpdate() {
       const text = await res.text();
       const server = /export const VERSION\s*=\s*'([^']+)'/.exec(text)?.[1];
       const sdk = /export const FIREBASE_SDK_VERSION\s*=\s*'([^']+)'/.exec(text)?.[1];
+      const leaflet = /export const LEAFLET_VERSION\s*=\s*'([^']+)'/.exec(text)?.[1] || LEAFLET_VERSION;
       if (!server || !sdk) throw new Error('version.js unlesbar');
       if (compareVersions(server, VERSION) > 0) {
         if (versionOf(registration.waiting) !== server && versionOf(registration.installing) !== server) {
           logEntry('info', `Neue Version ${server} gefunden, wird geladen`, { source: 'update' });
-          await register(server, sdk);
+          await register(server, sdk, leaflet);
         }
         lastCheck = { status: 'update', server };
       } else {

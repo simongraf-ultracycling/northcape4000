@@ -7,6 +7,7 @@ const fmtTime = new Intl.DateTimeFormat(LOCALE, { hour: '2-digit', minute: '2-di
 const fmtTimeSec = new Intl.DateTimeFormat(LOCALE, { hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' });
 const fmtDate = new Intl.DateTimeFormat(LOCALE, { day: '2-digit', month: '2-digit', year: 'numeric' });
 const fmtWeekday = new Intl.DateTimeFormat(LOCALE, { weekday: 'short' });
+const fmtDayMonth = new Intl.DateTimeFormat(LOCALE, { day: '2-digit', month: '2-digit' });
 const fmtNumber1 = new Intl.NumberFormat(LOCALE, { maximumFractionDigits: 1 });
 
 export function formatTime(ms, { seconds = false } = {}) {
@@ -68,14 +69,16 @@ function localMidnight(ms) {
   return d.getTime();
 }
 
-// Tag relativ zu "now": "heute", "gestern", Wochentag (bis 6 Tage) oder Datum
+// Tag relativ zu "now": "heute", "gestern", "morgen", Wochentag (bis 6 Tage
+// vorher/nachher) oder Datum mit Wochentag
 export function formatDay(ms, now) {
   if (!Number.isFinite(ms)) return '–';
   const days = Math.round((localMidnight(now) - localMidnight(ms)) / 86_400_000);
   if (days === 0) return 'heute';
   if (days === 1) return 'gestern';
-  if (days > 1 && days < 7) return fmtWeekday.format(new Date(ms));
-  return formatDate(ms);
+  if (days === -1) return 'morgen';
+  if (Math.abs(days) < 7) return fmtWeekday.format(new Date(ms));
+  return `${fmtWeekday.format(new Date(ms))} ${fmtDayMonth.format(new Date(ms))}`;
 }
 
 // Wert für <input type="datetime-local"> (Ortszeit des Geräts).

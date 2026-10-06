@@ -29,6 +29,15 @@ export function clear(el) {
   return el;
 }
 
+// Inhalt ersetzen; vorher den Fokus darin lösen (sonst löst das Entfernen
+// eines bearbeiteten Feldes "change"/"blur" mitten im Ersetzen aus)
+export function replaceContent(el, ...children) {
+  if (el.contains(document.activeElement)) document.activeElement.blur();
+  el.replaceChildren();
+  append(el, children);
+  return el;
+}
+
 // SVG-Symbol aus js/ui/icons.js
 export function icon(svgMarkup, className = '') {
   const template = document.createElement('template');
@@ -60,6 +69,25 @@ export function kv(key, value = '–') {
 
 export function button(text, { variant = '', block = false, onClick, iconSvg, type = 'button', disabled = false } = {}) {
   return h('button', { type, class: ['btn', variant && `btn-${variant}`, block && 'btn-block'].filter(Boolean).join(' '), onClick, disabled }, iconSvg && icon(iconSvg), text);
+}
+
+// Zweistufiger Knopf (z.B. Löschen)
+export function confirmButton(label, confirmLabel, onConfirm, variant = 'danger') {
+  const btn = button(label, { variant, block: true });
+  let armed = false;
+  btn.addEventListener('click', () => {
+    if (!armed) {
+      armed = true;
+      btn.textContent = confirmLabel;
+      setTimeout(() => {
+        armed = false;
+        btn.textContent = label;
+      }, 4000);
+      return;
+    }
+    onConfirm();
+  });
+  return btn;
 }
 
 export function sectionTitle(text) {

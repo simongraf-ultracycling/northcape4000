@@ -9,6 +9,7 @@ import { clock } from '../../clock.js';
 import { formatDay, formatElapsed, formatHours, formatTime, fromDateTimeLocalValue, toDateTimeLocalValue } from '../../format.js';
 import * as befinden from '../../model/befinden.js';
 import { CATEGORIES, STATES, STATE_IDS, actionLabel, currentStatus, durationsBetween, intervals, nextStates, startOfDay } from '../../model/status.js';
+import * as location from '../../geo/location.js';
 import * as store from '../../store.js';
 import { hideBanner, showBanner, toast } from '../banners.js';
 import { button, clear, h, icon, sectionTitle } from '../dom.js';
@@ -28,6 +29,16 @@ function dayTime(ms, now) {
 
 function stateIcon(stateId, className) {
   return icon(ICONS[STATES[stateId].icon], className);
+}
+
+// Standort zum Statuswechsel nachtragen (die Oberfläche wartet nie darauf).
+// Eine frische Position wird sofort genommen, sonst bis 20 s gewartet.
+function attachPosition(id) {
+  if (store.settings.get('savePosition', true) === false || !location.isSupported()) return;
+  location
+    .getPosition({ maxAge: 120_000, timeout: 20_000 })
+    .then((pos) => store.updateEvent(id, { position: location.toEventPosition(pos) }))
+    .catch((err) => store.updateEvent(id, { positionError: err?.code || 'unavailable' }));
 }
 
 // --- Aktueller Status ----------------------------------------------------------
@@ -300,6 +311,7 @@ export const statusView = {
         toast(store.describeError(err));
         return;
       }
+      attachPosition(id);
       clearTimeout(undoTimer);
       showBanner('undo-status', {
         title: `${STATES[to].label} gespeichert`,

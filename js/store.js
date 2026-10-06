@@ -259,6 +259,10 @@ export function setPrivate(key, value) {
   return write(['private', key], { value }, `Privat "${key}"`);
 }
 
+export function deletePrivate(key) {
+  return track(requireBackend().remove(['private', key]), ['private', key], `Privat "${key}" löschen`);
+}
+
 // ---------------------------------------------------------------------------
 // Verbindung / Diagnose
 

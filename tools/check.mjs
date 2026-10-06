@@ -83,6 +83,28 @@ for (const { id, scheme } of modes) {
   else for (const token of MODE_TOKENS) if (!block.includes(`${token}:`)) fail(`css/tokens.css: [data-mode="${id}"] definiert ${token} nicht`);
 }
 
+// --- Kartenkacheln: js/ui/map/layers.js ↔ index.html (CSP) ↔ sw.js (TILE_HOSTS) ---
+{
+  const layersSrc = read('js/ui/map/layers.js');
+  const swSrc = read('sw.js');
+  const csp = /Content-Security-Policy"\s*content="([^"]+)"/.exec(read('index.html'))?.[1] || '';
+  const imgSrc = (/img-src ([^;]+)/.exec(csp)?.[1] || '').split(/\s+/);
+  const hostAllowed = (host) =>
+    imgSrc.some((src) => {
+      const m = /^https:\/\/(\*\.)?(.+)$/.exec(src);
+      return m && (m[1] ? host.endsWith('.' + m[2]) : host === m[2]);
+    });
+  const hosts = new Set([...layersSrc.matchAll(/url: '(https:\/\/[^/']+)/g)].map((m) => new URL(m[1].replace('{s}', 'a')).hostname));
+  if (!hosts.size) fail('js/ui/map/layers.js: keine Kachel-URLs gefunden');
+  for (const host of hosts) {
+    if (!hostAllowed(host)) fail(`index.html: Kachel-Host ${host} fehlt in img-src der CSP`);
+    const tileHosts = [...(/const TILE_HOSTS = \[([^\]]*)\]/.exec(swSrc)?.[1] || '').matchAll(/'([^']+)'/g)].map((m) => m[1]);
+    if (!tileHosts.some((h) => host === h || host.endsWith('.' + h))) fail(`sw.js: Kachel-Host ${host} fehlt in TILE_HOSTS`);
+  }
+  if (!/export const LEAFLET_VERSION\s*=\s*'[^']+'/.test(read('js/version.js'))) fail('js/version.js: LEAFLET_VERSION fehlt');
+  if (!/script-src[^;]*https:\/\/cdn\.jsdelivr\.net/.test(csp) || !/style-src[^;]*https:\/\/cdn\.jsdelivr\.net/.test(csp)) fail('index.html: cdn.jsdelivr.net fehlt in script-src/style-src (Leaflet)');
+}
+
 // --- Repository-Hygiene --------------------------------------------------------------
 const tracked = execFileSync('git', ['ls-files'], { cwd: root, encoding: 'utf8' }).split('\n');
 for (const f of tracked) if (/\.(gpx|fit)$/i.test(f) || /(^|\/)private\//.test(f)) fail(`${f}: darf nicht ins Repository`);
