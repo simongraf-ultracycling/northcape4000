@@ -157,8 +157,8 @@ export async function signOut() {
 // ---------------------------------------------------------------------------
 // Schreiben / Lesen (intern)
 
-function meta() {
-  const t = clock.now();
+function meta(time) {
+  const t = Number.isFinite(time) ? time : clock.now();
   return { clientTime: t, tzOffset: -new Date(t).getTimezoneOffset(), appVersion: VERSION };
 }
 
@@ -170,8 +170,8 @@ export function newId() {
   return id;
 }
 
-function write(segments, fields, label) {
-  return track(requireBackend().write(segments, { ...fields, ...meta() }), segments, label);
+function write(segments, fields, label, time) {
+  return track(requireBackend().write(segments, { ...fields, ...meta(time) }), segments, label);
 }
 
 // Bestehendes Dokument ergänzen (Felder werden zusammengeführt)
@@ -209,9 +209,13 @@ function watchList(segments, options, cb) {
 // ---------------------------------------------------------------------------
 // Ereignisse: races/{raceId}/events
 
-export function addEvent(type, data = {}) {
+// clientTime: optional früherer Zeitpunkt (nachgetragen, z.B. "vor 5 min");
+// dann hält enteredTime fest, wann der Eintrag tatsächlich erfasst wurde.
+export function addEvent(type, data = {}, { clientTime } = {}) {
   if (!type) throw new Error('addEvent: type fehlt');
-  return write(['events', newId()], { type, data, source: 'app' }, `Ereignis "${type}"`);
+  const backdated = Number.isFinite(clientTime) && clientTime < clock.now() - 1000;
+  const fields = { type, data, source: 'app', ...(backdated ? { enteredTime: clock.now() } : {}) };
+  return write(['events', newId()], fields, `Ereignis "${type}"`, backdated ? clientTime : undefined);
 }
 
 // Ereignis korrigieren, z.B. { clientTime, originalClientTime } oder { voided: true }

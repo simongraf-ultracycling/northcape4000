@@ -10,7 +10,7 @@ import { displaySettingsView } from './views/display-settings.js';
 import { debugView } from './views/debug.js';
 import { moreView } from './views/more.js';
 import { mapView } from './views/map.js';
-import { statsView } from './views/placeholders.js';
+import { statsView } from './views/stats.js';
 import { planView } from './views/plan.js';
 import { routesView } from './views/routes.js';
 import { simulationView } from './views/simulation.js';

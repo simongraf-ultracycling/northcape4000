@@ -71,6 +71,9 @@
   --poi-unterkunft: #c2255c;
   --poi-eigen: #0b8a6a; /* eigene Punkte */
   --poi-24h: #fcc419; /* Ring um Punkte, die 24 h offen haben */
+  /* Leicht durchscheinend, ohne Unschärfe: Tab-Leiste und Karten-Knöpfe */
+  --tabbar-bg: color-mix(in srgb, var(--surface-bar) 84%, transparent);
+  --map-ctrl-bg: color-mix(in srgb, var(--surface-bar) 66%, transparent);
 
   /* Eckradius des Bildschirms (js/boot.js setzt ihn je nach iPhone-Modell).
      Die Tab-Leiste liegt konzentrisch dazu: Abstand zum Rand = Radius − halbe Höhe. */
@@ -110,6 +113,18 @@
   --state-hotel: #bf5af2;
   --state-schlafen: #8e8cff;
   --state-wach: #64d2ff;
+  --state-restaurant: #ff6482;
+  --state-panne: #c69c6d;
+  --state-faehre: #66d4cf;
+  /* Statistik-Diagramme (GROUPS in js/model/status.js) – als Palette geprüft
+     (Farbsehschwäche, Abstand, Kontrast); nur zusammen ändern */
+  --chart-fahren: #199e70;
+  --chart-essen: #d95926;
+  --chart-faehre: #3987e5;
+  --chart-pause: #c98500;
+  --chart-unterkunft: #d55181;
+  --chart-schlaf: #9085e9;
+  --chart-line: #3987e5;
 }
 
 [data-scheme="light"] {
@@ -138,6 +153,16 @@
   --state-hotel: #8e3fbf;
   --state-schlafen: #4b48c9;
   --state-wach: #0a7ea4;
+  --state-restaurant: #c2185b;
+  --state-panne: #7a5530;
+  --state-faehre: #0e7c78;
+  --chart-fahren: #1baf7a;
+  --chart-essen: #eb6834;
+  --chart-faehre: #2a78d6;
+  --chart-pause: #eda100;
+  --chart-unterkunft: #e87ba4;
+  --chart-schlaf: #4a3aa7;
+  --chart-line: #2a78d6;
 }
 
 /* --------------------------------------------------------------------------
@@ -233,6 +258,8 @@
 :root[data-glass="off"] {
   --shadow: none;
   --card-border: var(--separator-strong);
+  --tabbar-bg: var(--surface-bar);
+  --map-ctrl-bg: var(--surface-bar);
 }
 
 :root[data-glass="off"][data-scheme="dark"] {

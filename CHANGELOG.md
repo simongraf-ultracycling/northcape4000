@@ -4,6 +4,62 @@ Alle Änderungen an der App. Format angelehnt an [Keep a Changelog](https://keep
 Versionen nach [SemVer](https://semver.org/lang/de/). Die Versionsnummer steht ausschliesslich in
 `js/version.js` und wird bei jeder Änderung erhöht.
 
+## [0.9.0] – 2026-10-07
+
+Etappe 5 (Statistik) und Wünsche aus dem ersten Test.
+
+### Neu
+
+- **Statistik** (Tab "Statistik"): Zeitraum 7 Tage, 30 Tage oder alles.
+  - Kennzahlen: Fahrzeit, Strecke, Schlaf (Ø pro Nacht), Fahranteil der wachen Zeit,
+    Ø Tempo in Fahrt.
+  - **Plan-Vergleich:** "x km vor/hinter dem Plan" nach dem letzten Standort auf der
+    aktiven Route.
+  - **Tagesansicht** (Tag für Tag blättern): Tagesband über 24 h mit allen Abschnitten
+    (antippen zeigt Zustand, Uhrzeiten und Dauer), Zeiten je Gruppe, Strecke, Stand am
+    Abend gegenüber dem Plan, erste Abfahrt, letzter Halt, Fahrten und Stopps, längste
+    Fahrt, Befinden im Tagesdurchschnitt.
+  - **Alle Tage** als Balken (Fahren, Einkaufen und Essen, Fähre, Pausen, Hotel,
+    Schlaf) und **Strecke pro Tag**.
+  - **Befinden-Verlauf:** ein Diagramm je Regler (Müdigkeit, Sitz, Knie, Mental,
+    Motivation), Ziehen zeigt Zeitpunkt und Wert.
+  - **Rekorde und Durchschnitte:** längste Fahrt am Stück, längster und weitester Tag,
+    Schlaf, Stopps, Zeit für Essen, Fähren, Pausen, Pannen.
+  - Tage nach Ortszeit beim jeweiligen Wechsel (Zeitzonenwechsel z.B. nach Finnland);
+    Strecke aus den Standorten der Wechsel – entlang der Route, sonst Luftlinie.
+- **Status:** "Versorgung" heisst jetzt **Einkaufen**; neu **Restaurant**, **Panne** und
+  **Fähre**.
+- **Zeitpunkt beim Statuswechsel:** Rechts neben dem Hauptknopf zeigt eine Pille
+  "Jetzt". Antippen → "−5 min", "−15 min" … oder Uhrzeit eingeben; der nächste Wechsel
+  wird dann mit dieser Zeit gespeichert (z.B. vor 5 Minuten losgefahren). Danach – und
+  nach 5 Minuten ohne Wechsel – wieder "Jetzt". Früher als der letzte Wechsel geht nicht.
+- **Befinden:** neuer Regler **Knieprobleme** (0 = keine).
+
+### Geändert
+
+- **Karte aufgeräumt:** oben links nur noch ein kleines Routen-Symbol; Voraus und
+  Höhenprofil hinter einem kleinen Knopf (Liste) statt dauernd offen; Plus/Minus
+  entfernt (mit zwei Fingern zoomen); alle Knöpfe leicht durchscheinend.
+- **Versorgung als Symbole** (Wagen, Zapfsäule, Brot, Tropfen, Schlüssel, Bett) in der
+  Farbe der Kategorie, **über der Route**; 24 h geöffnet mit goldenem Rand.
+- **Kompass:** Standort-Knopf antippen = folgen, nochmals = **Kompass** (die Karte dreht
+  sich mit dem iPhone, Blickrichtung zeigt nach oben, Text bleibt aufrecht), nochmals =
+  aus. Mit einem Finger schieben beendet den Kompass. iOS fragt einmal nach "Bewegung
+  und Ausrichtung".
+- **Tab-Leiste** leicht durchscheinend (ohne Unschärfe; im Renn-Modus deckend).
+
+### Technisches
+
+- `store.addEvent(type, data, { clientTime })` für nachgetragene Einträge; diese
+  erhalten zusätzlich `enteredTime`. Älter als 10 min nachgetragen: kein Standort
+  (`positionError: 'backdated'`).
+- Neue Module `js/model/stats.js`, `js/ui/views/stats.js`, `js/ui/charts.js`,
+  `js/ui/map/compass.js`. Diagrammfarben `--chart-*` als eigene, auf Farbsehschwäche
+  geprüfte Palette; `tools/check.mjs` prüft Farben und Symbole aller Zustände und
+  Gruppen.
+- Sim-Testdaten: 3½ Tage mit allen Zuständen, Standorten entlang der Testroute und
+  Knie-Werten.
+
 ## [0.8.0] – 2026-10-06
 
 Etappe 3: Karte, Routen, Versorgung und Tagesplanung.

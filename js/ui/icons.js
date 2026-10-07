@@ -26,6 +26,9 @@ export const ICONS = {
   pause: svg('<rect x="6" y="4.5" width="4" height="15" rx="1.5"/><rect x="14" y="4.5" width="4" height="15" rx="1.5"/>'),
   cart: svg('<path d="M2.5 4h2.4l2.4 11h11l2-8.5H6"/><circle cx="9" cy="19.5" r="1.5"/><circle cx="17" cy="19.5" r="1.5"/>'),
   bed: svg('<path d="M3 5v14M3 15h18v4M21 15v-2.5A3.5 3.5 0 0 0 17.5 9H11v6"/><circle cx="7" cy="11.5" r="2"/>'),
+  utensils: svg('<path d="M6 3v7a2.5 2.5 0 0 0 5 0V3M8.5 3v18M17.5 21V3c-2 1.5-3 4-3 7.5V13h3"/>'),
+  ship: svg('<path d="M3 15.5 5 20h14l2-4.5-9-3-9 3Z"/><path d="M6 14.5V8h12v6.5M12 8V4M9 4h6"/><path d="M2 21.5c1.7 0 1.7-.8 3.4-.8s1.7.8 3.4.8 1.7-.8 3.4-.8 1.7.8 3.4.8 1.7-.8 3.4-.8 1.7.8 3 .8"/>'),
+  compass: svg('<circle cx="12" cy="12" r="9"/><path d="m12 5 2.6 7H9.4L12 5Z" fill="currentColor"/><path d="m12 19-2.6-7h5.2L12 19Z"/>'),
   // Karte und Versorgung
   layers: svg('<path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m3 13 9 5 9-5"/>'),
   locate: svg('<circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>'),

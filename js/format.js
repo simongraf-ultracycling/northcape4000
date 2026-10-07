@@ -27,6 +27,27 @@ export function formatDateTime(ms, { seconds = false, weekday = false } = {}) {
   return parts.join(' ');
 }
 
+// Uhrzeit am Ort des Fahrers: ms plus dessen Zeitzonen-Offset (Minuten), z.B.
+// für die Statistik nach Zeitzonenwechsel (MESZ → OESZ)
+const fmtTimeUtc = new Intl.DateTimeFormat(LOCALE, { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: 'UTC' });
+const fmtWeekdayUtc = new Intl.DateTimeFormat(LOCALE, { weekday: 'short', timeZone: 'UTC' });
+const fmtDayMonthUtc = new Intl.DateTimeFormat(LOCALE, { day: '2-digit', month: '2-digit', timeZone: 'UTC' });
+
+export function formatLocalTime(ms, tzMinutes) {
+  if (!Number.isFinite(ms)) return '–';
+  return fmtTimeUtc.format(new Date(ms + (tzMinutes || 0) * 60_000));
+}
+
+// Kalendertag 'YYYY-MM-DD' → "heute", "gestern" oder "Mo 05.10."
+export function formatDayKey(key, todayKey) {
+  const t = Date.parse(`${key}T00:00:00Z`);
+  if (!Number.isFinite(t)) return key;
+  const diff = Math.round((Date.parse(`${todayKey}T00:00:00Z`) - t) / 86_400_000);
+  if (diff === 0) return 'heute';
+  if (diff === 1) return 'gestern';
+  return `${fmtWeekdayUtc.format(t)} ${fmtDayMonthUtc.format(t)}`;
+}
+
 export function formatNumber(value, digits = 1) {
   if (!Number.isFinite(value)) return '–';
   return digits === 1 ? fmtNumber1.format(value) : new Intl.NumberFormat(LOCALE, { maximumFractionDigits: digits }).format(value);

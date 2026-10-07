@@ -10,6 +10,7 @@
 // - Keine GPX/FIT-Dateien im Repository
 // - Schweizer Schreibweise ("ss" statt "ß") in der Oberfläche
 // - CHANGELOG.md hat einen Eintrag für die aktuelle Version
+// - Farbmodi, Status-Zustände, Statistik-Gruppen und Kartenserver sind überall eingetragen
 
 import { execFileSync, spawnSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
@@ -81,6 +82,28 @@ for (const { id, scheme } of modes) {
   const block = cssBlock(`[data-mode="${id}"]`);
   if (!block) fail(`css/tokens.css: Block [data-mode="${id}"] fehlt`);
   else for (const token of MODE_TOKENS) if (!block.includes(`${token}:`)) fail(`css/tokens.css: [data-mode="${id}"] definiert ${token} nicht`);
+}
+
+// --- Status und Statistik: js/model/status.js ↔ Farben (tokens.css, app.css) ↔ Symbole ---
+{
+  const statusSrc = read('js/model/status.js');
+  const appCss = read('css/app.css');
+  const iconsSrc = read('js/ui/icons.js');
+  const count = (text, needle) => text.split(needle).length - 1;
+  const states = [...statusSrc.matchAll(/^\s+(\w+): \{ id: '(\w+)', label: '[^']+', icon: '(\w+)'/gm)].map((m) => ({ id: m[2], icon: m[3] }));
+  if (!states.length) fail('js/model/status.js: STATES nicht gefunden');
+  for (const { id, icon } of states) {
+    if (count(tokensSrc, `--state-${id}:`) < 2) fail(`css/tokens.css: --state-${id} fehlt (dunkel und hell)`);
+    if (!appCss.includes(`[data-state="${id}"]`)) fail(`css/app.css: [data-state="${id}"] fehlt`);
+    if (!new RegExp(`^\\s+${icon}: svg\\(`, 'm').test(iconsSrc)) fail(`js/ui/icons.js: Symbol "${icon}" (Status ${id}) fehlt`);
+  }
+  const groupsSrc = /export const GROUPS = \[([\s\S]*?)\];/.exec(statusSrc)?.[1] || '';
+  const groups = [...groupsSrc.matchAll(/id: '(\w+)'/g)].map((m) => m[1]);
+  if (!groups.length) fail('js/model/status.js: GROUPS nicht gefunden');
+  for (const id of groups) {
+    if (count(tokensSrc, `--chart-${id}:`) < 2) fail(`css/tokens.css: --chart-${id} fehlt (dunkel und hell)`);
+    if (!appCss.includes(`[data-group="${id}"]`)) fail(`css/app.css: [data-group="${id}"] fehlt`);
+  }
 }
 
 // --- Kartenkacheln: js/ui/map/layers.js ↔ index.html (CSP) ↔ sw.js (TILE_HOSTS) ---

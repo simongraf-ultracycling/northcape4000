@@ -148,3 +148,13 @@ python3 -m http.server 8080      # im Repository-Ordner
   durchblättern. Ohne Netz und ohne gespeicherte Kacheln: Route und Punkte auf schlichtem
   Hintergrund.
 - Eigene Punkte: lange auf die Karte tippen → "Eigenen Punkt hier speichern".
+- Standort-Knopf: einmal = folgen, nochmals = Kompass (Karte dreht mit dem iPhone; iOS
+  fragt einmal nach "Bewegung und Ausrichtung"), nochmals = aus.
+- Voraus (nächste Versorgung) und Höhenprofil: Knopf mit der Liste rechts.
+
+## Statistik
+
+Tab "Statistik": Kennzahlen, Plan-Vergleich, Tagesansicht mit Tagesband, alle Tage,
+Strecke pro Tag, Befinden-Verlauf und Rekorde – aus den Statuswechseln (mit Standort)
+und dem Befinden. Die Strecke stimmt am besten, wenn der Standort bei Statuswechseln
+gespeichert wird (Karte → Routen → Standort) und die Tour als aktive Route geladen ist.

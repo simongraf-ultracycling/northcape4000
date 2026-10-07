@@ -1,5 +1,6 @@
-// Status-Tab: aktueller Status mit Dauer, nächste Schritte (grosse Knöpfe),
-// Tageswerte, Befinden (vier Regler) und Verlauf mit Korrektur.
+// Status-Tab: aktueller Status mit Dauer, nächste Schritte (grosse Knöpfe) mit
+// wählbarem Zeitpunkt ("vor 5 min losgefahren"), Tageswerte, Befinden (Regler)
+// und Verlauf mit Korrektur.
 //
 // Jeder Wechsel und jedes Befinden ist ein Ereignis (store.addEvent) – auch
 // offline sofort gespeichert und später nachgeliefert. Die Oberfläche wartet
@@ -14,12 +15,17 @@ import * as store from '../../store.js';
 import { hideBanner, showBanner, toast } from '../banners.js';
 import { button, clear, h, icon, sectionTitle } from '../dom.js';
 import { ICONS } from '../icons.js';
+import { closeSheet, openSheet } from '../sheet.js';
 
 const UNDO_MS = 8000; // so lange lässt sich ein Statuswechsel rückgängig machen
 const TAP_LOCK_MS = 1200; // Doppeltipp (Handschuhe) ignorieren
 const HISTORY_SHORT = 8;
 const HISTORY_LONG = 40;
 const FUTURE_TOLERANCE_MS = 60_000;
+const MINUTE = 60_000;
+const CHOICE_TTL_MS = 5 * MINUTE; // gewählter Zeitpunkt verfällt ohne Wechsel
+const POSITION_MAX_BACK_MS = 10 * MINUTE; // älter nachgetragen: Standort passt nicht mehr
+const PRESETS = [1, 2, 5, 10, 15, 20, 30, 45, 60, 90, 120]; // "vor … min"
 
 // "14:32" heute, sonst mit Tag davor
 function dayTime(ms, now) {
@@ -31,10 +37,25 @@ function stateIcon(stateId, className) {
   return icon(ICONS[STATES[stateId].icon], className);
 }
 
+// "−5 min", "−1½ h"
+function agoLabel(min) {
+  if (min < 60) return `−${min} min`;
+  return `−${Math.floor(min / 60)}${min % 60 === 30 ? '½' : ''} h`;
+}
+
+// Letzter gültiger Statuswechsel (Zeitpunkt) – früher darf nicht nachgetragen werden
+function lastChangeTime(events, now) {
+  return currentStatus(events, now)?.since ?? -Infinity;
+}
+
 // Standort zum Statuswechsel nachtragen (die Oberfläche wartet nie darauf).
 // Eine frische Position wird sofort genommen, sonst bis 20 s gewartet.
-function attachPosition(id) {
+function attachPosition(id, backMs = 0) {
   if (store.settings.get('savePosition', true) === false || !location.isSupported()) return;
+  if (backMs > POSITION_MAX_BACK_MS) {
+    store.updateEvent(id, { positionError: 'backdated' });
+    return;
+  }
   location
     .getPosition({ maxAge: 120_000, timeout: 20_000 })
     .then((pos) => store.updateEvent(id, { position: location.toEventPosition(pos) }))
@@ -66,9 +87,91 @@ function statusCard() {
   return { el, render };
 }
 
+// --- Zeitpunkt des Wechsels -------------------------------------------------------------
+// Pille rechts vom Hauptknopf: "Jetzt" oder z.B. "−5 min · 14:27". Gilt für den
+// nächsten Statuswechsel (alle Knöpfe), danach und nach 5 min wieder "Jetzt".
+
+function timeChooser(getEvents) {
+  let chosen = null; // { time, at }
+  const big = h('span', { class: 'status-time-big', text: 'Jetzt' });
+  const small = h('span', { class: 'status-time-small' });
+  const el = h('button', { type: 'button', class: 'btn status-time', 'aria-label': 'Zeitpunkt des Wechsels' }, big, small);
+
+  const valid = (now) => chosen && now - chosen.at < CHOICE_TTL_MS && chosen.time > lastChangeTime(getEvents(), now);
+  const get = (now) => (valid(now) ? chosen.time : null);
+  const reset = () => {
+    chosen = null;
+    render(clock.now());
+  };
+  const set = (time) => {
+    const now = clock.now();
+    chosen = time >= now - 1000 ? null : { time, at: now };
+    render(now);
+  };
+
+  function render(now) {
+    if (chosen && !valid(now)) chosen = null;
+    el.classList.toggle('is-set', !!chosen);
+    if (!chosen) {
+      big.textContent = 'Jetzt';
+      small.textContent = formatTime(now);
+      return;
+    }
+    const min = Math.round((now - chosen.time) / MINUTE);
+    big.textContent = `−${min < 60 ? `${min} min` : formatHours(now - chosen.time)}`;
+    small.textContent = formatTime(chosen.time);
+  }
+
+  function openPicker() {
+    const now = clock.now();
+    const last = lastChangeTime(getEvents(), now);
+    const pick = (time) => {
+      set(time);
+      closeSheet();
+      if (chosen) toast(`Nächster Wechsel mit ${formatTime(time)}`);
+    };
+    const preset = (min) => {
+      const time = now - min * MINUTE;
+      const btn = button(min ? agoLabel(min) : 'Jetzt', { variant: min ? '' : 'primary', onClick: () => pick(time) });
+      btn.classList.add('time-preset');
+      if (min && time <= last) btn.disabled = true;
+      return btn;
+    };
+    const input = h('input', { class: 'input', type: 'time', value: toDateTimeLocalValue(chosen?.time ?? now).slice(11, 16) });
+    const apply = button('Übernehmen', {
+      variant: 'primary',
+      onClick: () => {
+        const [hh, mm] = String(input.value).split(':').map(Number);
+        if (!Number.isFinite(hh) || !Number.isFinite(mm)) return toast('Bitte eine Uhrzeit wählen');
+        const d = new Date(clock.now());
+        d.setHours(hh, mm, 0, 0);
+        let time = d.getTime();
+        if (time > clock.now() + FUTURE_TOLERANCE_MS) time -= 86_400_000; // z.B. 23:50 kurz nach Mitternacht = gestern
+        if (time <= last) return toast(`Liegt vor dem letzten Wechsel (${dayTime(last, clock.now())})`);
+        pick(time);
+      },
+    });
+    input.setAttribute('aria-label', 'Uhrzeit');
+    openSheet({
+      title: 'Zeitpunkt',
+      content: [
+        h('p', { class: 'small muted', text: 'Wann war der Wechsel? Z.B. vor 5 Minuten losgefahren: "−5 min" wählen, dann "Weiterfahren".' }),
+        h('div', { class: 'time-presets' }, preset(0), PRESETS.map(preset)),
+        h('p', { class: 'field-label', text: 'Oder Uhrzeit eingeben' }),
+        h('div', { class: 'time-entry' }, input, apply),
+        Number.isFinite(last) ? h('p', { class: 'footnote', text: `Frühestens nach dem letzten Wechsel (${dayTime(last, now)}). Nach 5 Minuten ohne Wechsel gilt wieder "Jetzt".` }) : null,
+      ],
+    });
+  }
+
+  el.addEventListener('click', openPicker);
+  render(clock.now());
+  return { el, render, get, reset };
+}
+
 // --- Nächste Schritte ---------------------------------------------------------------
 
-function actions(onChoose) {
+function actions(onChoose, timeEl) {
   const main = h('div', { class: 'status-actions' });
   const others = h('div', { class: 'status-actions', hidden: true });
   const toggle = button('Anderer Status …', { variant: 'plain', block: true });
@@ -94,10 +197,11 @@ function actions(onChoose) {
     if (from === shownState) return;
     shownState = from;
     const next = nextStates(from);
-    const buttons = next.map((to, i) => stateButton(to, from, i === 0));
+    const [first, ...buttons] = next.map((to, i) => stateButton(to, from, i === 0));
+    first.classList.remove('span-2');
     // Ungerade Anzahl unter dem Hauptknopf: letzten Knopf über die ganze Breite
-    if (buttons.length > 1 && (buttons.length - 1) % 2 === 1) buttons[buttons.length - 1].classList.add('span-2');
-    clear(main).append(...buttons);
+    if (buttons.length % 2 === 1) buttons[buttons.length - 1].classList.add('span-2');
+    clear(main).append(h('div', { class: 'status-primary span-2' }, first, timeEl), ...buttons);
     const rest = STATE_IDS.filter((id) => id !== from && !next.includes(id));
     clear(others).append(...rest.map((to) => stateButton(to, from, false)));
     toggle.hidden = rest.length === 0;
@@ -298,23 +402,27 @@ export const statusView = {
     const mood = moodCard();
     const hist = history();
 
+    const timeChoice = timeChooser(() => events);
     const choose = (to) => {
       if (tapLocked) return;
-      const from = currentStatus(events, clock.now())?.state || null;
+      const now = clock.now();
+      const at = timeChoice.get(now);
+      const from = currentStatus(events, now)?.state || null;
       if (to === from) return;
       tapLocked = true;
       setTimeout(() => (tapLocked = false), TAP_LOCK_MS);
       let id;
       try {
-        ({ id } = store.addEvent('status', { state: to, from }));
+        ({ id } = store.addEvent('status', { state: to, from }, { clientTime: at ?? undefined }));
       } catch (err) {
         toast(store.describeError(err));
         return;
       }
-      attachPosition(id);
+      attachPosition(id, at ? now - at : 0);
+      timeChoice.reset();
       clearTimeout(undoTimer);
       showBanner('undo-status', {
-        title: `${STATES[to].label} gespeichert`,
+        title: `${STATES[to].label} gespeichert${at ? ` (${formatTime(at)})` : ''}`,
         sub: 'Tippen zum Rückgängigmachen',
         iconSvg: ICONS.undo,
         onTap: () => {
@@ -326,7 +434,7 @@ export const statusView = {
       });
       undoTimer = setTimeout(() => hideBanner('undo-status'), UNDO_MS);
     };
-    const act = actions(choose);
+    const act = actions(choose, timeChoice.el);
 
     // Schnell veränderliche Teile (Dauer) jede Sekunde, der Rest bei neuen Daten
     const tick = () => {
@@ -335,6 +443,7 @@ export const statusView = {
       card.render(cur, now, loaded);
       if (!loaded) return;
       act.render(cur);
+      timeChoice.render(now);
       today.render(events, now);
     };
     const renderAll = () => {
