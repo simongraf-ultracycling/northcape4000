@@ -1,17 +1,19 @@
-// Befinden: vier Regler von 0 bis 10.
+// Befinden: fünf Regler von 0 bis 10.
 // Ein Eintrag ist ein Ereignis (races/{raceId}/events):
-//   { type: 'befinden', data: { muedigkeit, sitz, mental, motivation }, clientTime, … }
+//   { type: 'befinden', data: { muedigkeit, sitz, knie, mental, motivation }, clientTime, … }
+// Ältere Einträge (vor v0.9.0) haben noch kein "knie".
 //
-// Richtung: Bei Müdigkeit und Sitzproblemen ist 0 gut, bei Mental und
+// Richtung: Bei Müdigkeit, Sitz- und Knieproblemen ist 0 gut, bei Mental und
 // Motivation ist 10 gut. Die Farbe (gut/mittel/schlecht) zeigt das einheitlich.
 
 export const SCALE = { min: 0, max: 10 };
 
 export const DIMENSIONS = [
-  { id: 'muedigkeit', label: 'Müdigkeit', low: 'frisch', high: 'todmüde', higherIsBetter: false, initial: 2 },
-  { id: 'sitz', label: 'Sitzprobleme', low: 'keine', high: 'stark', higherIsBetter: false, initial: 0 },
-  { id: 'mental', label: 'Mental', low: 'am Boden', high: 'top', higherIsBetter: true, initial: 8 },
-  { id: 'motivation', label: 'Motivation', low: 'keine', high: 'voll', higherIsBetter: true, initial: 8 },
+  { id: 'muedigkeit', label: 'Müdigkeit', short: 'Müdigkeit', low: 'frisch', high: 'todmüde', higherIsBetter: false, initial: 2 },
+  { id: 'sitz', label: 'Sitzprobleme', short: 'Sitz', low: 'keine', high: 'stark', higherIsBetter: false, initial: 0 },
+  { id: 'knie', label: 'Knieprobleme', short: 'Knie', low: 'keine', high: 'stark', higherIsBetter: false, initial: 0 },
+  { id: 'mental', label: 'Mental', short: 'Mental', low: 'am Boden', high: 'top', higherIsBetter: true, initial: 8 },
+  { id: 'motivation', label: 'Motivation', short: 'Motivation', low: 'keine', high: 'voll', higherIsBetter: true, initial: 8 },
 ];
 
 // 'ok' | 'warn' | 'danger'
@@ -37,7 +39,15 @@ export function latestBefinden(events) {
   return latest;
 }
 
-// Kurzform für Listen, z.B. "Müdigkeit 3 · Sitz 2 · Mental 7 · Motivation 8"
+// Kurzform für Listen, z.B. "Müdigkeit 3 · Sitz 2 · Knie 0 · Mental 7 · Motivation 8"
+// (fehlende Werte älterer Einträge weglassen)
 export function summary(data) {
-  return DIMENSIONS.map((d) => `${d.id === 'sitz' ? 'Sitz' : d.label} ${data?.[d.id] ?? '–'}`).join(' · ');
+  return DIMENSIONS.filter((d) => Number.isFinite(data?.[d.id]))
+    .map((d) => `${d.short} ${data[d.id]}`)
+    .join(' · ');
+}
+
+// Gültige Einträge, älteste zuerst
+export function befindenEvents(events) {
+  return events.filter((e) => e.type === 'befinden' && !e.voided && e.data && Number.isFinite(e.clientTime)).sort((a, b) => a.clientTime - b.clientTime);
 }

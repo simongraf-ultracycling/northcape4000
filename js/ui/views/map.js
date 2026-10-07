@@ -1,6 +1,7 @@
 // Karte: Route mit Etappen und Lücken (Fähren), km-Marken, Wegpunkte (Gates),
 // Schlafstopps aus dem Plan, Versorgung, eigene Punkte und eigener Standort –
-// auf vielen Kartenebenen. Lange tippen = "Dieser Ort" (eigenen Punkt speichern). Unten: Lage auf der Route, "Voraus" (nächste Versorgung) und
+// auf vielen Kartenebenen. Lange tippen = "Dieser Ort" (eigenen Punkt speichern).
+// Standort-Knopf: aus → folgen → Kompass (Karte dreht mit dem iPhone) → aus. Unten: Lage auf der Route, "Voraus" (nächste Versorgung) und
 // Höhenprofil. Ohne Netz bleiben Route, Punkte und Standort sichtbar
 // (Hintergrund aus gespeicherten Kacheln oder schlicht).
 
@@ -18,6 +19,7 @@ import { getEffectiveMode, onDisplayChange, schemeOf } from '../display.js';
 import { button, clear, confirmButton, h, icon, sectionTitle, switchRow } from '../dom.js';
 import { ICONS } from '../icons.js';
 import { AUTO_BASE, BASE_LAYERS, TILE_OVERLAYS, baseLayer, tileOptions } from '../map/layers.js';
+import { createRotator, headingSource } from '../map/compass.js';
 import { loadLeaflet } from '../map/leaflet.js';
 import { catIcon, dayTime, hoursAt, kmLabel, mapsButton, offLabel, poiDetails, poiTitle } from '../map/poi-ui.js';
 import { createProfile } from '../map/profile.js';
@@ -25,6 +27,7 @@ import { closeSheet, openSheet } from '../sheet.js';
 
 const ON_ROUTE_M = 300; // näher als das gilt als "auf der Route"
 const POI_MIN_ZOOM = 9;
+const POI_MAX_MARKERS = 300; // gleichzeitig im Sichtbereich
 const VORAUS_COUNT = 4;
 
 const DEFAULT_SHOW = { km: true, stages: true, waypoints: true, sleep: true, days: false, only24: false, mine: true, pois: Object.fromEntries(POI_CATEGORIES.map((c) => [c.id, true])) };
@@ -71,51 +74,48 @@ export const mapView = {
       planData: null,
       pos: null, // letzte Position
       onRoute: null, // { km, dist } der Position
-      follow: false,
-      locate: store.settings.get('mapLocate', true) !== false,
+      mode: 'off', // Standort: off | on | follow | compass
       layers: {},
       show: getShow(),
     };
 
     // --- Gerüst ---------------------------------------------------------------
     const mapEl = h('div', { class: 'map-canvas', id: 'map-canvas' });
-    const routePill = h('button', { type: 'button', class: 'map-route-pill glass' }, icon(ICONS.route), h('span', { class: 'map-route-name', text: 'Karte wird geladen …' }));
-    routePill.addEventListener('click', () => (window.location.hash = '#karte/routen'));
-
-    const ctrl = (svg, label, onClick) => {
-      const btn = h('button', { type: 'button', class: 'map-btn', 'aria-label': label }, h('span', { class: 'chip chip-round glass' }, icon(svg)));
+    const ctrl = (svg, label, onClick, extra = '') => {
+      const btn = h('button', { type: 'button', class: `map-btn ${extra}`.trim(), 'aria-label': label, title: label }, h('span', { class: 'chip chip-round map-chip' }, icon(svg)));
       btn.addEventListener('click', onClick);
       return btn;
     };
+    // Oben links: nur ein kleines Routen-Symbol (Name steht in der Routen-Verwaltung)
+    const routeBtn = ctrl(ICONS.route, 'Routen', () => (window.location.hash = '#karte/routen'), 'map-route-btn');
     const locateBtn = ctrl(ICONS.locate, 'Mein Standort', () => toggleLocate());
-    const controls = h(
-      'div',
-      { class: 'map-controls' },
-      ctrl(ICONS.layers, 'Kartenebenen', () => openLayerSheet()),
-      locateBtn,
-      ctrl(ICONS.fit, 'Ganze Route zeigen', () => fitRoute()),
-      ctrl(ICONS.plus, 'Hineinzoomen', () => s.map?.zoomIn()),
-      ctrl(ICONS.minus, 'Herauszoomen', () => s.map?.zoomOut()),
-    );
+    const panelBtn = ctrl(ICONS.list, 'Voraus und Höhenprofil', () => setPanel(panelMode === 'zu' ? lastTab : 'zu'));
+    const controls = h('div', { class: 'map-controls' }, ctrl(ICONS.layers, 'Kartenebenen', () => openLayerSheet()), locateBtn, ctrl(ICONS.fit, 'Ganze Route zeigen', () => fitRoute()), panelBtn);
 
-    // Unten: Lage, Voraus, Profil
+    // Unten (nur auf Wunsch): Lage, Voraus, Profil
     const summary = h('div', { class: 'map-summary' });
     const panelBody = h('div', { class: 'map-panel-body' });
     const tabVoraus = h('button', { type: 'button', class: 'map-tab', text: 'Voraus' });
     const tabProfil = h('button', { type: 'button', class: 'map-tab', text: 'Profil' });
-    const panel = h('section', { class: 'map-panel glass' }, h('div', { class: 'map-panel-head' }, summary, h('div', { class: 'map-tabs' }, tabVoraus, tabProfil)), panelBody);
-    let panelMode = store.settings.get('mapPanel', 'voraus');
+    const panelClose = h('button', { type: 'button', class: 'map-panel-close', 'aria-label': 'Schliessen' }, icon(ICONS.close));
+    const panel = h('section', { class: 'map-panel glass', hidden: true }, h('div', { class: 'map-panel-head' }, summary, h('div', { class: 'map-tabs' }, tabVoraus, tabProfil), panelClose), panelBody);
+    let lastTab = store.settings.get('mapPanel', 'voraus') === 'profil' ? 'profil' : 'voraus';
+    let panelMode = 'zu'; // beim Öffnen der Karte immer zu
     const setPanel = (mode) => {
-      panelMode = panelMode === mode ? 'klein' : mode;
-      store.settings.set('mapPanel', panelMode);
+      panelMode = mode;
+      if (mode !== 'zu') {
+        lastTab = mode;
+        store.settings.set('mapPanel', mode);
+      }
       renderPanel();
     };
     tabVoraus.addEventListener('click', () => setPanel('voraus'));
     tabProfil.addEventListener('click', () => setPanel('profil'));
+    panelClose.addEventListener('click', () => setPanel('zu'));
     const profile = createProfile({ onSelect: (km) => markKm(km, false) });
 
     const message = h('div', { class: 'map-message glass', hidden: true });
-    const page = h('div', { class: 'map-page' }, mapEl, routePill, controls, message, panel);
+    const page = h('div', { class: 'map-page' }, mapEl, routeBtn, controls, message, panel);
     container.append(page);
     document.body.classList.add('page-map');
     cleanups.push(() => document.body.classList.remove('page-map'));
@@ -126,17 +126,25 @@ export const mapView = {
     };
 
     // --- Hilfen ------------------------------------------------------------------
-    // Verdeckter Bereich unten (Panel, Tab-Leiste) in Pixeln der Karte
+    // Verdeckter Bereich unten (Panel bzw. Tab-Leiste) in Pixeln der Karte
     const bottomCover = () => {
       const mapRect = mapEl.getBoundingClientRect();
-      const panelRect = panel.getBoundingClientRect();
-      return Math.max(0, mapRect.bottom - panelRect.top);
+      const cover = !panel.hidden ? panel : document.getElementById('tabbar');
+      return cover ? Math.max(0, mapRect.bottom - cover.getBoundingClientRect().top) : 0;
+    };
+    // Sichtbarer Kartenbereich (Bildschirm) für die Drehung; die Oberkante wird
+    // gemessen, solange die Karte nicht gedreht (und vergrössert) ist.
+    let areaTop = null;
+    const visibleArea = () => {
+      if (areaTop === null) areaTop = mapEl.getBoundingClientRect().top;
+      return { left: 0, top: areaTop, width: window.innerWidth, height: window.innerHeight - areaTop };
     };
     // Punkt in die Mitte des SICHTBAREN Kartenteils setzen
     const focusOn = (lat, lon, zoom, animate = false) => {
       if (!s.map) return;
       const z = zoom ?? s.map.getZoom();
-      const offset = bottomCover() / 2 - 20; // Route-Pille oben
+      if (rotator?.enabled) return s.map.setView([lat, lon], z, { animate });
+      const offset = bottomCover() / 2;
       const target = s.map.project([lat, lon], z).add([0, offset]);
       s.map.setView(s.map.unproject(target, z), z, { animate });
     };
@@ -155,7 +163,6 @@ export const mapView = {
       try {
         s.L = await loadLeaflet();
       } catch (err) {
-        routePill.querySelector('.map-route-name').textContent = 'Karte nicht verfügbar';
         showMessage('Die Kartenbibliothek konnte nicht geladen werden. Beim ersten Öffnen braucht die Karte einmal Netz.', button('Neu laden', { onClick: () => window.location.reload() }));
         return;
       }
@@ -174,8 +181,7 @@ export const mapView = {
       s.layers.stages = L.layerGroup().addTo(map);
       s.layers.waypoints = L.layerGroup().addTo(map);
       s.layers.sleep = L.layerGroup().addTo(map);
-      s.layers.poiRenderer = L.canvas({ padding: 0.3, tolerance: 10 });
-      s.layers.pois = new Map(POI_CATEGORIES.map((c) => [c.id, L.layerGroup()]));
+      s.layers.pois = L.layerGroup().addTo(map);
       s.layers.mine = L.layerGroup().addTo(map);
       s.layers.pick = L.layerGroup().addTo(map);
       s.layers.me = L.layerGroup().addTo(map);
@@ -188,17 +194,22 @@ export const mapView = {
       zoomClass();
       map.on('zoomend moveend', () => {
         updateKmMarks();
-        updatePoiVisibility();
+        updatePoiMarkers();
         saveViewport();
       });
-      map.on('dragstart', () => setFollow(false));
+      map.on('dragstart', () => mode() === 'follow' && setMode('on'));
       map.on('click', (e) => onMapClick(e));
       map.on('contextmenu', (e) => onLongPress(e));
-      cleanups.push(() => map.remove());
+      rotator = createRotator({ map, el: mapEl, area: visibleArea, onBearing: (b) => locateBtn.style.setProperty('--needle', `${-b}deg`) });
+      watchPanGesture();
+      cleanups.push(() => {
+        heading.stop();
+        map.remove();
+      });
       if (store.isSimMode()) window.__ncMap = s; // nur für Tests im Sim-Modus
 
       await loadData(true);
-      if (s.locate) startLocate();
+      if (store.settings.get('mapLocate', true) !== false) setMode('on');
     }
 
     function applyBase() {
@@ -246,16 +257,14 @@ export const mapView = {
       if (!alive) return;
       await loadMine();
       if (!alive) return;
-      const name = routePill.querySelector('.map-route-name');
+      routeBtn.title = s.route ? `Routen – aktiv: ${s.route.name}` : 'Routen';
       if (!s.route || s.route.isEmpty) {
-        name.textContent = s.route ? `${s.route.name} – noch ohne Etappen` : 'Noch keine Route';
         showMessage('Lade eine GPX-Route (Gesamtroute oder einzelne Etappen) oder lege die Testroute an.', button('Routen verwalten', { variant: 'primary', onClick: () => (window.location.hash = '#karte/routen') }));
         drawAll();
         renderPanel();
         return;
       }
       message.hidden = true;
-      name.textContent = `${s.route.name} · ${formatNumber(s.route.totalKm, 0)} km`;
       try {
         s.planData = await loadPlan(s.route.id);
         s.plan = computePlan(s.route, s.planData.settings, s.planData.pins);
@@ -313,8 +322,8 @@ export const mapView = {
 
     function fitRoute() {
       if (!s.map || !s.route || s.route.isEmpty) return;
-      setFollow(false);
-      s.map.fitBounds(s.route.bounds(), { paddingTopLeft: [24, 80], paddingBottomRight: [72, bottomCover() + 24] });
+      if (mode() === 'follow' || mode() === 'compass') setMode('on');
+      s.map.fitBounds(s.route.bounds(), { paddingTopLeft: [24, 64], paddingBottomRight: [72, bottomCover() + 24] });
     }
 
     // --- Zeichnen ----------------------------------------------------------------
@@ -324,10 +333,9 @@ export const mapView = {
       drawStages();
       drawWaypoints();
       drawSleep();
-      drawPois();
       drawMine();
       updateKmMarks();
-      updatePoiVisibility();
+      updatePoiMarkers(true);
     }
 
     function drawRoute() {
@@ -351,7 +359,16 @@ export const mapView = {
       for (const g of s.route.gapLines()) L.polyline(g, { color: gapColor, weight: 3, dashArray: '6 8', opacity: 0.9, interactive: false }).addTo(s.layers.route);
     }
 
-    const divIcon = (el, size = [0, 0], anchor) => s.L.divIcon({ html: el, className: 'map-div', iconSize: size, iconAnchor: anchor || [size[0] / 2, size[1] / 2] });
+    // Marker-Symbol; die Hülle .map-rot dreht im Kompass-Modus um den Ankerpunkt
+    // gegen die Karte, damit Symbole und Text aufrecht bleiben.
+    const divIcon = (el, size = [0, 0], anchor) => {
+      const a = anchor || [size[0] / 2, size[1] / 2];
+      const rot = h('span', { class: 'map-rot' }, el);
+      rot.style.width = `${size[0]}px`;
+      rot.style.height = `${size[1]}px`;
+      rot.style.transformOrigin = `${a[0]}px ${a[1]}px`;
+      return s.L.divIcon({ html: rot, className: 'map-div', iconSize: size, iconAnchor: a });
+    };
 
     function drawStages() {
       const { L } = s;
@@ -391,27 +408,37 @@ export const mapView = {
       }
     }
 
-    function drawPois() {
-      const { L } = s;
-      for (const group of s.layers.pois.values()) group.clearLayers();
-      if (!s.pois.length) return;
-      const ring24 = cssVar('--poi-24h');
-      const colors = Object.fromEntries(POI_CATEGORIES.map((c) => [c.id, cssVar(`--poi-${c.id}`)]));
-      for (const p of s.pois) {
-        if (s.show.only24 && !p.always) continue;
-        const group = s.layers.pois.get(p.cat);
-        if (!group) continue;
-        const m = L.circleMarker([p.lat, p.lon], {
-          renderer: s.layers.poiRenderer,
-          radius: p.always ? 8 : 7,
-          color: p.always ? ring24 : '#ffffff',
-          weight: p.always ? 3.5 : 2,
-          fillColor: colors[p.cat],
-          fillOpacity: 1,
-          bubblingMouseEvents: false,
-        });
+    // Versorgung als Symbole (über der Route). Nur was im Sichtbereich liegt,
+    // ist als Marker vorhanden – sonst wird die Karte bei tausenden Punkten träge.
+    const poiMarkers = new Map(); // id → marker
+    function updatePoiMarkers(rebuild = false) {
+      const { L, map } = s;
+      if (!map) return;
+      if (rebuild) {
+        s.layers.pois.clearLayers();
+        poiMarkers.clear();
+      }
+      const wanted = new Map();
+      if (map.getZoom() >= POI_MIN_ZOOM && s.pois.length) {
+        const bounds = map.getBounds().pad(0.25);
+        for (const p of s.pois) {
+          if (!s.show.pois[p.cat] || (s.show.only24 && !p.always) || !bounds.contains([p.lat, p.lon])) continue;
+          wanted.set(p.id, p);
+          if (wanted.size >= POI_MAX_MARKERS) break;
+        }
+      }
+      for (const [id, m] of poiMarkers) {
+        if (wanted.has(id)) continue;
+        s.layers.pois.removeLayer(m);
+        poiMarkers.delete(id);
+      }
+      for (const [id, p] of wanted) {
+        if (poiMarkers.has(id)) continue;
+        const el = h('span', { class: `map-poi${p.always ? ' is-24' : ''}`, dataset: { cat: p.cat } }, catIcon(p.cat));
+        const m = L.marker([p.lat, p.lon], { icon: divIcon(el, [30, 30]), keyboard: false, bubblingMouseEvents: false, zIndexOffset: p.always ? 300 : 200, title: poiTitle(p) });
         m.on('click', () => openPoiSheet(p));
-        m.addTo(group);
+        m.addTo(s.layers.pois);
+        poiMarkers.set(id, m);
       }
     }
 
@@ -424,16 +451,6 @@ export const mapView = {
         const m = L.marker([p.lat, p.lon], { icon: divIcon(el, [0, 0], [0, 0]), keyboard: false, bubblingMouseEvents: false, zIndexOffset: 600 });
         m.on('click', () => openMineSheet(p));
         m.addTo(s.layers.mine);
-      }
-    }
-
-    function updatePoiVisibility() {
-      if (!s.map) return;
-      const visible = s.map.getZoom() >= POI_MIN_ZOOM;
-      for (const [cat, group] of s.layers.pois) {
-        const on = visible && s.show.pois[cat];
-        if (on && !s.map.hasLayer(group)) group.addTo(s.map);
-        if (!on && s.map.hasLayer(group)) s.map.removeLayer(group);
       }
     }
 
@@ -465,9 +482,15 @@ export const mapView = {
       if (pan) focusOn(p.lat, p.lon, undefined, true);
     }
 
-    // --- Standort ---------------------------------------------------------------
+    // --- Standort und Kompass ----------------------------------------------------
+    // Modi: off (kein Standort) · on (Standort sichtbar) · follow (zentriert,
+    // Norden oben) · compass (zentriert, Karte dreht mit der Blickrichtung).
     let unwatch = null;
     let errorShown = false;
+    let rotator = null;
+    const heading = headingSource();
+    const mode = () => s.mode;
+    const following = () => s.mode === 'follow' || s.mode === 'compass';
 
     function startLocate() {
       if (unwatch) return;
@@ -475,18 +498,13 @@ export const mapView = {
         if (pos) {
           s.pos = pos;
           updatePosition();
-          if (s.follow) focusOn(pos.lat, pos.lon, Math.max(s.map.getZoom(), 14), true);
-        } else if (err && s.locate && !errorShown) {
+          if (following()) centerOnPosition(true);
+        } else if (err && s.mode !== 'off' && !errorShown) {
           errorShown = true; // nur einmal melden
           toast(err.text, 3500);
-          if (err.code === 'denied') {
-            unwatch?.();
-            unwatch = null;
-            locateBtn.classList.remove('is-on', 'is-follow');
-          }
+          if (err.code === 'denied') setMode('off');
         }
       });
-      locateBtn.classList.add('is-on');
     }
 
     function stopLocate() {
@@ -495,38 +513,88 @@ export const mapView = {
       s.pos = null;
       s.onRoute = null;
       s.layers.me?.clearLayers();
-      locateBtn.classList.remove('is-on', 'is-follow');
       renderPanel();
     }
     cleanups.push(() => unwatch?.());
 
-    function setFollow(on) {
-      s.follow = on;
-      locateBtn.classList.toggle('is-follow', on);
+    function centerOnPosition(animate) {
+      if (!s.pos || !s.map) return;
+      const zoom = Math.max(s.map.getZoom(), s.mode === 'compass' ? 15 : 14);
+      focusOn(s.pos.lat, s.pos.lon, zoom, animate);
     }
 
-    // Tippen: Standort an → zentrieren und folgen → folgen aus
-    function toggleLocate() {
-      if (!s.locate || !unwatch) {
-        s.locate = true;
-        errorShown = false;
-        store.settings.set('mapLocate', true);
-        startLocate();
-        setFollow(true);
-        if (s.pos) focusOn(s.pos.lat, s.pos.lon, Math.max(s.map.getZoom(), 14), true);
-        return;
+    function setMode(next) {
+      const prev = s.mode;
+      s.mode = next;
+      if (next === 'off') stopLocate();
+      else startLocate();
+      if (prev === 'compass' && next !== 'compass') {
+        heading.stop();
+        rotator?.disable();
+        areaTop = null;
       }
-      if (!s.follow) {
-        setFollow(true);
-        if (s.pos) focusOn(s.pos.lat, s.pos.lon, Math.max(s.map.getZoom(), 14), true);
-        else toast('Standort wird gesucht …');
-        return;
-      }
-      setFollow(false);
-      s.locate = false;
-      store.settings.set('mapLocate', false);
-      stopLocate();
+      locateBtn.classList.toggle('is-on', next !== 'off');
+      locateBtn.classList.toggle('is-follow', next === 'follow' || next === 'compass');
+      locateBtn.classList.toggle('is-compass', next === 'compass');
+      clear(locateBtn.firstChild).append(icon(next === 'compass' ? ICONS.compass : ICONS.locate));
+      locateBtn.setAttribute('aria-label', { off: 'Mein Standort', on: 'Mein Standort', follow: 'Kompass: Karte nach Blickrichtung drehen', compass: 'Standort ausschalten' }[next]);
+      store.settings.set('mapLocate', next !== 'off');
+      if (prev !== next && s.pos && (next === 'follow' || next === 'compass')) centerOnPosition(true);
+      if (s.pos) updatePosition();
     }
+
+    // Tippen: folgen → Kompass → aus
+    function toggleLocate() {
+      if (s.mode === 'off' || s.mode === 'on') {
+        errorShown = false;
+        setMode('follow');
+        if (!s.pos) toast('Standort wird gesucht …');
+        return;
+      }
+      if (s.mode === 'follow') return enterCompass();
+      setMode('off');
+    }
+
+    function enterCompass() {
+      // Erlaubnis muss direkt beim Tippen angefragt werden (iOS)
+      const started = heading.start((deg) => rotator.setTarget(deg));
+      s.map.stop(); // laufende Verschiebung (Folgen) nicht nachlaufen lassen
+      rotator.enable(s.pos ? [s.pos.lat, s.pos.lon] : null, Math.max(s.map.getZoom(), 15));
+      setMode('compass');
+      toast('Kompass: Karte dreht mit dem iPhone');
+      started.then((result) => {
+        if (s.mode !== 'compass') return;
+        if (result === 'denied') {
+          toast('Kompass nicht erlaubt – in den iPhone-Einstellungen "Bewegung und Ausrichtung" erlauben', 4500);
+          return setMode('follow');
+        }
+        // Ohne Kompass-Daten: Fahrtrichtung aus dem GPS, sonst Norden oben
+        setTimeout(() => {
+          if (s.mode === 'compass' && !heading.received && !Number.isFinite(s.pos?.heading)) {
+            toast('Kein Kompass verfügbar – Karte zeigt nach Norden', 3500);
+            setMode('follow');
+          }
+        }, 3000);
+      });
+    }
+
+    // Im Kompass-Modus: mit einem Finger schieben = Kompass verlassen (Norden oben)
+    function watchPanGesture() {
+      const pointers = new Map();
+      const down = (e) => pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      const move = (e) => {
+        const start = pointers.get(e.pointerId);
+        if (!start || s.mode !== 'compass' || pointers.size !== 1) return;
+        if (Math.hypot(e.clientX - start.x, e.clientY - start.y) > 14) setMode('on');
+      };
+      const up = (e) => pointers.delete(e.pointerId);
+      mapEl.addEventListener('pointerdown', down);
+      mapEl.addEventListener('pointermove', move);
+      for (const type of ['pointerup', 'pointercancel', 'pointerleave']) mapEl.addEventListener(type, up);
+    }
+
+    // Kartenkoordinate eines Leaflet-Ereignisses (im Kompass-Modus selbst gerechnet)
+    const latLngOf = (e) => (rotator?.enabled && e.originalEvent ? rotator.latLngAt(e.originalEvent.clientX, e.originalEvent.clientY) : e.latlng);
 
     function updatePosition() {
       const { L } = s;
@@ -538,9 +606,13 @@ export const mapView = {
         return;
       }
       L.circle([pos.lat, pos.lon], { radius: Math.max(pos.acc || 0, 5), color: cssVar('--map-me'), weight: 1, fillOpacity: 0.12, interactive: false }).addTo(s.layers.me);
-      const el = h('span', { class: `map-me${pos.simulated ? ' is-sim' : ''}` }, Number.isFinite(pos.heading) && pos.speed > 1 ? h('span', { class: 'map-me-heading', dataset: { deg: Math.round(pos.heading) } }) : null);
-      const heading = el.querySelector('.map-me-heading');
-      if (heading) heading.style.setProperty('--heading', `${Math.round(pos.heading)}deg`);
+      const compass = s.mode === 'compass';
+      // Kompass: Blickrichtung zeigt nach oben; sonst Fahrtrichtung aus dem GPS
+      const showCourse = !compass && Number.isFinite(pos.heading) && pos.speed > 1;
+      const el = h('span', { class: `map-me${pos.simulated ? ' is-sim' : ''}${compass ? ' is-compass' : ''}` }, compass ? h('span', { class: 'map-me-cone' }) : showCourse ? h('span', { class: 'map-me-heading' }) : null);
+      if (showCourse) el.querySelector('.map-me-heading').style.setProperty('--heading', `${Math.round(pos.heading)}deg`);
+      // Ohne Kompass-Daten dreht die Karte nach der Fahrtrichtung (GPS)
+      if (compass && !heading.received && Number.isFinite(pos.heading) && pos.speed > 2) rotator.setTarget(pos.heading);
       L.marker([pos.lat, pos.lon], { icon: divIcon(el, [22, 22]), interactive: false, keyboard: false, zIndexOffset: 1000 }).addTo(s.layers.me);
       s.onRoute = s.route && !s.route.isEmpty ? s.route.nearest(pos.lat, pos.lon, 100_000) : null;
       renderPanel();
@@ -553,23 +625,22 @@ export const mapView = {
       const t = performance.now();
       if (t - lastPress < 800) return;
       lastPress = t;
-      openPlaceSheet(e.latlng.lat, e.latlng.lng);
+      const ll = latLngOf(e);
+      openPlaceSheet(ll.lat, ll.lng);
     }
 
     function simulateHere(lat, lon) {
       location.setSimulatedPosition(lat, lon);
-      if (!unwatch) {
-        s.locate = true;
-        startLocate();
-      }
+      if (s.mode === 'off') setMode('on');
       toast('Position simuliert (Sim-Modus)');
     }
 
     // Tippen nahe der Route: km-Info
     function onMapClick(e) {
       if (!s.route || s.route.isEmpty) return;
-      const tolerance = 28 * metersPerPixel(e.latlng.lat, s.map.getZoom());
-      const near = s.route.nearest(e.latlng.lat, e.latlng.lng, tolerance);
+      const ll = latLngOf(e);
+      const tolerance = 28 * metersPerPixel(ll.lat, s.map.getZoom());
+      const near = s.route.nearest(ll.lat, ll.lng, tolerance);
       if (near) openKmSheet(near.km);
     }
 
@@ -646,15 +717,15 @@ export const mapView = {
     }
 
     function renderPanel() {
+      const hasRoute = s.route && !s.route.isEmpty;
+      panelBtn.hidden = !hasRoute;
+      panelBtn.classList.toggle('is-on', panelMode !== 'zu');
+      panel.hidden = !hasRoute || panelMode === 'zu';
+      clear(panelBody);
+      if (panel.hidden) return;
       renderSummary();
       tabVoraus.classList.toggle('is-active', panelMode === 'voraus');
       tabProfil.classList.toggle('is-active', panelMode === 'profil');
-      const hasRoute = s.route && !s.route.isEmpty;
-      tabVoraus.hidden = !hasRoute;
-      tabProfil.hidden = !hasRoute;
-      clear(panelBody);
-      panelBody.hidden = !hasRoute || panelMode === 'klein';
-      if (panelBody.hidden) return;
       panelBody.append(panelMode === 'profil' ? renderProfil() : renderVoraus());
     }
 
@@ -862,7 +933,7 @@ export const mapView = {
           checked: !!s.show.pois[c.id],
           onChange: (on) => {
             setShow({ pois: { [c.id]: on } });
-            updatePoiVisibility();
+            updatePoiMarkers(true);
             renderPanel();
           },
         }).row;
@@ -889,7 +960,7 @@ export const mapView = {
             showRow('Tagesetappen färben', 'Route abwechselnd je Tag', 'days', drawRoute),
           ),
           sectionTitle('Versorgung'),
-          h('div', { class: 'list glass' }, ...poiRows, showRow('Nur 24 h geöffnet', 'z.B. Tankstellen in der Nacht', 'only24', () => (drawPois(), updatePoiVisibility(), renderPanel()))),
+          h('div', { class: 'list glass' }, ...poiRows, showRow('Nur 24 h geöffnet', 'z.B. Tankstellen in der Nacht', 'only24', () => (updatePoiMarkers(true), renderPanel()))),
           sectionTitle('Eigene Punkte'),
           h('div', { class: 'list glass' }, mineRow),
           h('p', { class: 'footnote', text: `Versorgung ab Zoomstufe ${POI_MIN_ZOOM} sichtbar. Eigene Punkte: lange auf die Karte tippen. Ohne Netz zeigt die Karte gespeicherte Ausschnitte – oder wähle "Ohne Hintergrund".` }),
@@ -909,7 +980,7 @@ export const mapView = {
       }),
     );
     cleanups.push(onDisplayChange(() => applyBase()));
-    const resize = () => s.map?.invalidateSize();
+    const resize = () => (rotator?.enabled ? rotator.relayout() : s.map?.invalidateSize());
     window.addEventListener('resize', resize);
     cleanups.push(() => window.removeEventListener('resize', resize));
 

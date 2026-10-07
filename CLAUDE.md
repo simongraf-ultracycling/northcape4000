@@ -70,6 +70,7 @@ js/model/pois.js        Versorgung (Overpass), Kategorien, Speicherung (privat)
 js/model/opening-hours.js  OSM-Öffnungszeiten (Teilmenge): offen jetzt/bei Ankunft, 24 h
 js/model/plan.js        Tagesplanung: Fahrzeit, Schlafstopps, Ankunftszeiten
 js/model/my-pois.js     Eigene Punkte (privat, für alle Routen)
+js/model/stats.js       Statistik: Tage (Ortszeit), Gruppen, Strecke, Rekorde, Befinden-Verlauf
 js/geo/geo.js           Distanz, Vereinfachung, Höhenmeter, Polyline, Segment-Index
 js/geo/gpx.js           GPX lesen (im Web Worker: import.js, import-worker.js)
 js/geo/location.js      Standort (watch/get), im Sim-Modus simulierbar
@@ -80,7 +81,9 @@ js/ui/sheet.js          Bottom-Sheet (Details, Auswahl)
 js/ui/views/map.js      Karte: Ebenen, Route, Versorgung, eigene Punkte, Voraus, Profil
 js/ui/views/routes.js   #karte/routen: GPX-Import, Etappen, Versorgung laden, Routen
 js/ui/views/plan.js     Plan: Tagesetappen mit Schlafstopps
-js/ui/map/              Leaflet laden, Kartenebenen, Höhenprofil, Punkt-Anzeige
+js/ui/views/stats.js    Statistik: Kennzahlen, Plan-Vergleich, Tag, alle Tage, Befinden, Rekorde
+js/ui/charts.js         Kleine Diagramme ohne Bibliothek (Tagesband, Balken, Säulen, Linie)
+js/ui/map/              Leaflet laden, Kartenebenen, Höhenprofil, Punkt-Anzeige, Kompass
 tools/check.mjs         Regel-Prüfung: node tools/check.mjs (nur Node-Bordmittel)
 .github/workflows/pages.yml   Prüfen + Veröffentlichen auf GitHub Pages (bei Push auf main)
 tools/make_icons.py     Icons einmalig erzeugen (nur Python-Standardbibliothek)
@@ -98,12 +101,15 @@ tools/make_icons.py     Icons einmalig erzeugen (nur Python-Standardbibliothek)
   - `events/{id}` – Ereignisse (`addEvent(type, data)`, `subscribeEvents`,
     Korrektur `updateEvent(id, felder)`):
     - `type: 'status'`, `data: { state, from }` – Zustände `fahren`, `pause`,
-      `versorgung`, `hotel`, `schlafen`, `wach` (`js/model/status.js`). Danach per
+      `versorgung` (Anzeige "Einkaufen"), `restaurant`, `panne`, `faehre`, `hotel`,
+      `schlafen`, `wach` (`js/model/status.js`; ids nie umbenennen, nur Beschriftungen).
+      Nachgetragen ("vor 5 min"): `clientTime` in der Vergangenheit + `enteredTime`
+      (`addEvent(type, data, { clientTime })`). Danach per
       `updateEvent` ergänzt: `position` `{ lat, lon, acc, time, alt?, simulated? }` bzw.
-      `positionError` (`denied`, `unavailable`, `timeout`); abschaltbar (Einstellung
-      `savePosition`).
-    - `type: 'befinden'`, `data: { muedigkeit, sitz, mental, motivation }` (0–10;
-      Müdigkeit/Sitz: 0 gut, Mental/Motivation: 10 gut)
+      `positionError` (`denied`, `unavailable`, `timeout`, `backdated` = mehr als
+      10 min nachgetragen); abschaltbar (Einstellung `savePosition`).
+    - `type: 'befinden'`, `data: { muedigkeit, sitz, knie, mental, motivation }` (0–10;
+      Müdigkeit/Sitz/Knie: 0 gut, Mental/Motivation: 10 gut; `knie` erst ab v0.9.0)
     - Korrekturen ergänzen das Dokument (`editedTime`, `editedVersion`); Zeit geändert:
       `clientTime` neu, `originalClientTime` alt; gelöscht: `voided: true`.
       **Alle Auswertungen ignorieren `voided` und nehmen `clientTime`.**
@@ -124,7 +130,8 @@ tools/make_icons.py     Icons einmalig erzeugen (nur Python-Standardbibliothek)
 - Schreiben gibt sofort `{ id, local, server }` zurück. `local` = lokal gespeichert,
   `server` = vom Server bestätigt (bleibt offline offen). **Oberfläche wartet nie auf `server`.**
 - Geräte-Einstellungen (Renn-Modus, Sim-Schalter …) über `store.settings`. Karte:
-  `mapBase`, `mapOverlays`, `mapShow`, `mapPanel`, `mapViewport`, `mapLocate`.
+  `mapBase`, `mapOverlays`, `mapShow`, `mapPanel` (zuletzt gewählter Reiter; das Panel
+  startet immer zu), `mapViewport`, `mapLocate`. Statistik: `statsRange`.
 - Abonnements liefern Objekte `{ id, …Felder, pending }`; `pending` = noch nicht beim Server.
 
 ### Offline und Updates
@@ -160,7 +167,7 @@ tools/make_icons.py     Icons einmalig erzeugen (nur Python-Standardbibliothek)
 | 2 | Status-Automat und Befindens-Regler mit Firebase-Sync | ✅ erledigt (v0.7.0: Status-Tab, Befinden 4 Regler, Verlauf mit Korrektur) |
 | 3 | Karte: Testroute, Import der offiziellen GPX (nur privat!), Echtzeit-Standort, Versorgungspunkte, eigene POIs, Google-Maps-Knopf | ✅ erledigt (v0.8.0: 15 Hintergründe + Überlagerungen, Routen aus Gesamt-GPX oder Etappen, Versorgung aus OSM mit Öffnungszeiten/24 h, eigene Punkte, Höhenprofil, Standort bei Statuswechsel, Offline-Kacheln) |
 | 4 | Zeitplan: Kontrollpunkte/Gates, Zeitfenster, Etappen, Fähren-Rechner | teilweise (v0.8.0: Tagesetappen mit Schlafstopps im Tab Plan; offen: Gates mit Zeitfenstern, Fähren-Rechner) |
-| 5 | Statistik: Tageswerte, Diagramme | offen |
+| 5 | Statistik: Tageswerte, Diagramme | ✅ erledigt (v0.9.0: Kennzahlen, Plan-Vergleich, Tagesband, alle Tage, Strecke pro Tag, Befinden-Verlauf, Rekorde; dazu Status Einkaufen/Restaurant/Panne/Fähre, Zeitpunkt wählbar, Knie-Regler, Karte mit Kompass) |
 | 6 | Follower-Seite mit geheimem Link | offen |
 | 7 | Postbote (Apps Script): Garmin-Mail und LiveTrack | offen |
 | 8 | Scriptable: Kurzbefehle, Siri, Widgets, lokale Erinnerungen | offen |
@@ -188,7 +195,8 @@ tools/make_icons.py     Icons einmalig erzeugen (nur Python-Standardbibliothek)
   Scrollen erscheint unter dem Titel eine feine Linie (`:root.scrolled`, `js/ui/shell.js`).
   Titel als Text, Zurück und Verbindungsanzeige als kleine Pillen (`.chip`,
   `.chip-round`, 44 px sichtbar, 56 px Tippfläche).
-- **Unten:** Tab-Leiste als **freigestellte**, deckende Pille, **konzentrisch zu den
+- **Unten:** Tab-Leiste als **freigestellte**, leicht durchscheinende Pille
+  (`--tabbar-bg`, ohne Unschärfe; Renn-Modus deckend), **konzentrisch zu den
   Bildschirmecken** (gefällt Simon sehr): Inhalt läuft dahinter und rundherum durch.
   `js/boot.js` setzt `--screen-radius` je iPhone-Modell (nach Bildschirmgrösse), Abstand
   zu Rand und Boden `--tabbar-inset` = Eckradius − halbe Leistenhöhe (mind. 10 px).
@@ -205,8 +213,20 @@ tools/make_icons.py     Icons einmalig erzeugen (nur Python-Standardbibliothek)
   `prefers-contrast: more`.
 - Alle Farben, Radien, Schatten, Schriften als CSS-Variablen in `css/tokens.css`.
   Karte: `--map-*` (Route, Lücken, Standort, Schlafstopps) und `--poi-*` (je Kategorie,
-  `--poi-24h` = Ring für 24 h geöffnet). Bedienelemente auf der Karte sind dieselben
-  Glas-Pillen (56 px) wie in der Kopfzeile.
+  `--poi-24h` = Ring für 24 h geöffnet).
+- **Karte schlank** (Wunsch von Simon): oben links nur ein kleines Routen-Symbol,
+  rechts eine Spalte runder, leicht durchscheinender Knöpfe (`--map-ctrl-bg`): Ebenen,
+  Standort/Kompass, ganze Route, Voraus/Profil. Kein Plus/Minus (Zoomen mit zwei
+  Fingern). Voraus und Profil nur auf Wunsch. Versorgung als **Symbole über der Route**.
+- **Kompass-Modus** (`js/ui/map/compass.js`): Leaflet kann nicht drehen – der Karten-
+  Container ist dann ein übergrosses Quadrat und dreht per CSS um den Standort; Marker
+  stecken in einer Hülle `.map-rot` (via `divIcon()` in map.js) und drehen gegen,
+  ebenso die Quellenangabe. Tippen/langes Tippen rechnet die Drehung selbst zurück
+  (`latLngAt`). Neue Marker immer über `divIcon()` erzeugen.
+- **Diagramme** (`js/ui/charts.js`): eigene Palette `--chart-*` je Gruppe (GROUPS in
+  `js/model/status.js`), geprüft mit dem Palette-Validator (Farbsehschwäche, Abstand
+  benachbarter Farben) – Reihenfolge und Farben nur zusammen ändern und neu prüfen.
+  Werte stehen immer auch als Text (Legende, Liste); Text nie in der Datenfarbe.
 - Touch: Tippflächen **mind. 56 px**, mit Handschuhen bedienbar, `touch-action: manipulation`,
   Eingabefelder **mind. 16 px** (kein Auto-Zoom). Ganze Zeilen tippbar (Schalter).
 - iOS-Home-Screen: `viewport-fit=cover` (unten bis an den Rand), Safe-Area-Abstände,
@@ -263,7 +283,10 @@ tools/make_icons.py     Icons einmalig erzeugen (nur Python-Standardbibliothek)
 - Tageswerte/Statistik über `clientTime` + `tzOffset` (Simon wechselt Zeitzonen: MESZ,
   in Finnland OESZ).
 - Header zeigt Verbindung und Anzahl nicht synchronisierter Einträge (Tippen → Debug).
-- Sim-Testdaten in `js/store/sim-seed.js` pro Etappe ergänzen.
+- Sim-Testdaten in `js/store/sim-seed.js` pro Etappe ergänzen (v0.9.0: 3½ Tage mit
+  allen Zuständen, Standorten entlang der Testroute und Befinden inkl. Knie).
+- Statistik: Abschnitte länger als 48 h ohne Wechsel zählen nicht (`MAX_INTERVAL_MS`
+  in `js/model/stats.js`) – ein vergessener Status soll nicht monatelang "fahren".
 
 ## Offene Punkte
 

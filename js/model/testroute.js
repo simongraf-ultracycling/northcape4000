@@ -121,6 +121,11 @@ function densify(points) {
   return { lat, lon, ele };
 }
 
+// Grobe Linie über die Orte (ohne Kurven) – z.B. für Sim-Testdaten mit Standort
+export function testRouteLine() {
+  return STAGES.flatMap((st) => st.points.map(([lat, lon]) => [lat, lon]));
+}
+
 export function createTestRoute() {
   const stages = STAGES.map((st) => trackToStage(densify(st.points), { name: st.name, file: 'Testroute' }));
   const byName = new Map(STAGES.flatMap((st) => st.points.map((p) => [p[3], p])));

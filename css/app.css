@@ -560,42 +560,17 @@ body.page-map .top-cover {
   mix-blend-mode: multiply;
 }
 
-.map-route-pill,
+.map-route-btn,
 .map-controls,
 .map-message {
   position: fixed;
   z-index: 20;
 }
 
-.map-route-pill {
-  top: calc(env(safe-area-inset-top) + var(--sim-bar-height) + var(--header-height) + var(--space-s) + 2px);
-  left: calc(var(--gutter) + env(safe-area-inset-left));
-  max-width: calc(100% - 2 * var(--gutter) - 165px);
-  min-height: var(--tap-min);
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-xs);
-  padding: 0 var(--space-m) 0 14px;
-  border-radius: var(--radius-pill);
-  border-color: var(--separator);
-  background: var(--surface-bar);
-  box-shadow: var(--shadow);
-  color: var(--text);
-  font-weight: var(--font-weight-strong);
-  cursor: pointer;
-}
-
-.map-route-pill svg {
-  width: 22px;
-  height: 22px;
-  flex: none;
-  color: var(--accent);
-}
-
-.map-route-name {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+/* Oben links: kleines Routen-Symbol */
+.map-route-btn {
+  top: calc(env(safe-area-inset-top) + var(--sim-bar-height) + var(--header-height) + var(--space-xs));
+  left: calc(var(--gutter) - 6px + env(safe-area-inset-left));
 }
 
 .map-controls {
@@ -620,8 +595,19 @@ body.page-map .top-cover {
   width: 48px;
   height: 48px;
   color: var(--text);
-  border-color: var(--separator);
+  /* leicht durchscheinend: die Karte bleibt dahinter erkennbar */
+  background: var(--map-ctrl-bg);
+  border: 1px solid var(--separator);
   box-shadow: var(--shadow);
+}
+
+.map-btn .chip svg {
+  width: 24px;
+  height: 24px;
+}
+
+.map-btn[hidden] {
+  display: none;
 }
 
 .map-btn:active .chip {
@@ -633,8 +619,13 @@ body.page-map .top-cover {
 }
 
 .map-btn.is-follow .chip {
-  background: var(--accent-fill);
+  background: color-mix(in srgb, var(--accent-fill) 88%, transparent);
   color: var(--text-on-accent);
+}
+
+/* Kompass: Nadel zeigt nach Norden (dreht gegen die Karte) */
+.map-btn.is-compass .chip svg {
+  transform: rotate(var(--needle, 0deg));
 }
 
 .map-message {
@@ -666,11 +657,33 @@ body.page-map .top-cover {
   overflow: hidden;
 }
 
+.map-panel[hidden] {
+  display: none;
+}
+
 .map-panel-head {
   display: flex;
   align-items: center;
   gap: var(--space-xs);
   padding: 4px 4px 4px var(--space-m);
+}
+
+.map-panel-close {
+  flex: none;
+  width: var(--tap-min);
+  height: var(--tap-min);
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-muted);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.map-panel-close svg {
+  width: 22px;
+  height: 22px;
 }
 
 .map-summary {
@@ -855,6 +868,40 @@ body.page-map .top-cover {
   border: 0;
 }
 
+/* Hülle jedes Symbols: dreht im Kompass-Modus um den Ankerpunkt gegen die Karte */
+.map-rot {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.map-compass .map-rot {
+  transform: rotate(var(--map-bearing, 0deg));
+}
+
+/* Versorgung: Symbol im Kreis der Kategorie-Farbe, über der Route */
+.map-poi {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--cat-color);
+  color: #ffffff;
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
+}
+
+.map-poi svg {
+  width: 17px;
+  height: 17px;
+}
+
+.map-poi.is-24 {
+  border-color: var(--poi-24h);
+  box-shadow: 0 0 0 2px #ffffff, 0 1px 5px rgba(0, 0, 0, 0.5);
+}
+
 .map-km {
   position: absolute;
   transform: translate(-50%, -50%);
@@ -1003,6 +1050,20 @@ body.page-map .top-cover {
   border-right: 6px solid transparent;
   border-bottom: 12px solid var(--map-me);
   transform: translate(-50%, -50%) rotate(var(--heading, 0deg)) translateY(-18px);
+}
+
+/* Kompass: Blickrichtung als Lichtkegel nach oben */
+.map-me-cone {
+  position: absolute;
+  left: 50%;
+  bottom: 50%;
+  width: 56px;
+  height: 52px;
+  transform: translateX(-50%);
+  clip-path: polygon(50% 100%, 0 0, 100% 0);
+  background: linear-gradient(to top, color-mix(in srgb, var(--map-me) 60%, transparent), transparent);
+  z-index: -1;
+  pointer-events: none;
 }
 
 /* Lange getippter Ort ("Dieser Ort") */
@@ -1228,6 +1289,9 @@ body.sheet-open {
 [data-state="hotel"] { --state-color: var(--state-hotel); }
 [data-state="schlafen"] { --state-color: var(--state-schlafen); }
 [data-state="wach"] { --state-color: var(--state-wach); }
+[data-state="restaurant"] { --state-color: var(--state-restaurant); }
+[data-state="panne"] { --state-color: var(--state-panne); }
+[data-state="faehre"] { --state-color: var(--state-faehre); }
 [data-state="befinden"] { --state-color: var(--accent); }
 
 .status-card {
@@ -1310,6 +1374,86 @@ body.sheet-open {
 
 .btn-primary.btn-state svg {
   color: inherit;
+}
+
+/* Hauptknopf mit Zeitpunkt-Pille rechts daneben */
+.status-primary {
+  display: flex;
+  gap: var(--space-s);
+}
+
+.status-primary > .btn-state {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.status-time {
+  flex: none;
+  width: 96px;
+  min-height: 64px;
+  padding: 0 var(--space-xs);
+  flex-direction: column;
+  gap: 0;
+  line-height: 1.15;
+}
+
+.status-time-big {
+  font-size: var(--font-size);
+  font-weight: var(--font-weight-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.status-time-small {
+  font-size: var(--font-size-small);
+  font-weight: 400;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.status-time.is-set {
+  background: var(--accent-soft);
+  color: var(--accent);
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.status-time.is-set .status-time-small {
+  color: var(--accent);
+}
+
+/* Auswahl des Zeitpunkts (Sheet) */
+.time-presets {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-s);
+}
+
+.time-presets .btn {
+  padding: 0 var(--space-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.time-presets .btn:disabled {
+  opacity: 0.35;
+}
+
+.time-entry {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-s);
+}
+
+.time-entry .input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.time-presets .btn,
+.time-entry .btn {
+  white-space: nowrap;
+}
+
+.time-entry .btn {
+  flex: none;
 }
 
 /* Tageswerte */
@@ -1477,6 +1621,432 @@ body.sheet-open {
   padding: var(--space-s) var(--space-m) var(--space-m);
 }
 
+/* --- Statistik (js/ui/views/stats.js, js/ui/charts.js) ------------------------ */
+
+/* Farbe je Gruppe (GROUPS in js/model/status.js); geprüfte Palette --chart-* */
+[data-group="fahren"] { --group-color: var(--chart-fahren); }
+[data-group="essen"] { --group-color: var(--chart-essen); }
+[data-group="faehre"] { --group-color: var(--chart-faehre); }
+[data-group="pause"] { --group-color: var(--chart-pause); }
+[data-group="unterkunft"] { --group-color: var(--chart-unterkunft); }
+[data-group="schlaf"] { --group-color: var(--chart-schlaf); }
+
+/* Zeitraum: Segment-Schalter als Pille */
+.segmented {
+  display: flex;
+  padding: 4px;
+  gap: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+}
+
+.segmented-item {
+  flex: 1;
+  min-height: 48px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-weight: var(--font-weight-strong);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.segmented-item.is-active {
+  background: var(--surface-bar);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+
+.tiles-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.tile-sub {
+  font-size: var(--font-size-small);
+  color: var(--text-muted);
+}
+
+.tile:not([data-category]) .tile-label::before {
+  display: none;
+}
+
+[data-category="fahren"] .tile-label::before { background: var(--chart-fahren); }
+[data-category="schlaf"] .tile-label::before { background: var(--chart-schlaf); }
+
+/* Legende: Farbfeld + Text (Text nie in der Datenfarbe) */
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px var(--space-m);
+  font-size: var(--font-size-small);
+  color: var(--text-muted);
+}
+
+.chart-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chart-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  background: var(--group-color);
+  flex: none;
+}
+
+.chart-key-value {
+  color: var(--text);
+  font-weight: var(--font-weight-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Tagesband: 24 h, Abschnitte mit 2 px Lücke in der Kartenfarbe */
+.band,
+.line-chart {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.band {
+  touch-action: pan-y;
+}
+
+.band-track {
+  position: relative;
+  height: 28px;
+  border-radius: 6px;
+  background: var(--surface-2);
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.band-seg {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: var(--group-color);
+  box-shadow: inset -2px 0 0 var(--surface);
+}
+
+.band-seg.is-picked {
+  box-shadow: inset -2px 0 0 var(--surface), inset 0 0 0 2px var(--text);
+}
+
+.band-ticks {
+  position: relative;
+  height: 16px;
+  margin: 2px 0 0;
+  font-size: var(--font-size-tiny);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.band-ticks span {
+  position: absolute;
+  transform: translateX(-50%);
+}
+
+.band-ticks span:first-child {
+  transform: none;
+}
+
+.band-ticks span:last-child {
+  transform: translateX(-100%);
+}
+
+.band-caption {
+  min-height: 1.4em;
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Tag wählen */
+.day-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-s);
+}
+
+.day-nav-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.day-nav-title {
+  font-size: var(--font-size-large);
+  font-weight: var(--font-weight-title);
+}
+
+.btn-round {
+  width: var(--tap-min);
+  padding: 0;
+  flex: none;
+}
+
+.btn-round:disabled {
+  opacity: 0.3;
+}
+
+.day-card .list .kv {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.day-card .list .kv + .kv {
+  border-top: 1px solid var(--separator);
+}
+
+/* Alle Tage: gestapelte Balken (Skala 24 h) */
+.day-rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.day-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: var(--tap-min);
+  padding: 8px var(--space-s);
+  margin: 0 calc(-1 * var(--space-s));
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.day-row.is-selected {
+  background: var(--accent-soft);
+}
+
+.day-row-head {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-s);
+  font-size: var(--font-size-small);
+}
+
+.day-row-label {
+  font-weight: var(--font-weight-strong);
+}
+
+.day-row-value {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.stack-bar {
+  display: flex;
+  gap: 2px;
+  height: 14px;
+  border-radius: 4px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.stack-seg {
+  background: var(--group-color);
+  min-width: 2px;
+}
+
+/* Säulen: Strecke pro Tag */
+.cols {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  height: 160px;
+}
+
+.col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.col-value {
+  min-height: 1.2em;
+  font-size: var(--font-size-tiny);
+  font-weight: var(--font-weight-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.col-track {
+  flex: 1;
+  width: 100%;
+  max-width: 24px;
+  display: flex;
+  align-items: flex-end;
+  border-bottom: 1px solid var(--separator);
+}
+
+.col-fill {
+  width: 100%;
+  border-radius: 4px 4px 0 0;
+  background: var(--chart-line);
+}
+
+.col-label {
+  font-size: var(--font-size-tiny);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* Befinden: kleine Liniendiagramme je Regler */
+.mood-chart + .mood-chart {
+  border-top: 1px solid var(--separator);
+  padding-top: var(--space-s);
+}
+
+.mood-chart-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 2px var(--space-s);
+}
+
+.mood-chart-title {
+  font-weight: var(--font-weight-strong);
+}
+
+.mood-chart-hint {
+  font-size: var(--font-size-small);
+  color: var(--text-muted);
+}
+
+.mood-chart-value {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-size-small);
+  font-variant-numeric: tabular-nums;
+}
+
+.mood-chart-value[data-level="ok"] { --level-color: var(--ok); }
+.mood-chart-value[data-level="warn"] { --level-color: var(--warn); }
+.mood-chart-value[data-level="danger"] { --level-color: var(--danger); }
+
+.level-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--level-color);
+}
+
+.line-chart {
+  touch-action: pan-y;
+}
+
+.line-svg {
+  display: block;
+  width: 100%;
+}
+
+.chart-grid {
+  stroke: var(--separator);
+  stroke-width: 1;
+}
+
+.chart-axis {
+  fill: var(--text-muted);
+  font-size: 10px;
+}
+
+.chart-line {
+  fill: none;
+  stroke: var(--chart-line);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.chart-dot {
+  fill: var(--chart-line);
+  stroke: var(--surface);
+  stroke-width: 2;
+}
+
+.chart-cursor {
+  stroke: var(--text-muted);
+  stroke-width: 1;
+}
+
+.line-readout {
+  min-height: 1.3em;
+  font-size: var(--font-size-small);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
+/* Plan-Vergleich */
+.progress-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-s);
+}
+
+.progress-head svg {
+  width: 24px;
+  height: 24px;
+  color: var(--accent);
+}
+
+.progress-title {
+  font-size: var(--font-size-large);
+  font-weight: var(--font-weight-title);
+}
+
+.progress-track {
+  position: relative;
+  height: 20px;
+  border-radius: 6px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.progress-plan,
+.progress-ist {
+  position: absolute;
+  left: 0;
+  border-radius: 0 4px 4px 0;
+}
+
+.progress-plan {
+  top: 0;
+  bottom: 0;
+  background: color-mix(in srgb, var(--text-muted) 35%, transparent);
+}
+
+.progress-ist {
+  top: 5px;
+  bottom: 5px;
+  background: var(--chart-line);
+}
+
+.key-ist .chart-swatch { background: var(--chart-line); }
+.key-plan .chart-swatch { background: color-mix(in srgb, var(--text-muted) 35%, transparent); }
+
 /* --- Schalter (gross, ganze Zeile tippbar) ------------------------------------ */
 
 .switch {
@@ -1575,7 +2145,8 @@ body.sheet-open {
 
 /* Abstand zu Rand und Boden = Eckradius des iPhones − halbe Leistenhöhe
    (--tabbar-inset in tokens.css); so verlaufen die Rundungen parallel.
-   Der Inhalt läuft dahinter und rundherum durch – die Pille ist deckend. */
+   Der Inhalt läuft dahinter und rundherum durch – die Pille ist leicht
+   durchscheinend (--tabbar-bg, ohne Unschärfe; im Renn-Modus deckend). */
 .tabbar {
   position: fixed;
   z-index: 30;
@@ -1593,7 +2164,7 @@ body.sheet-open {
 }
 
 .tabbar.glass {
-  background: var(--surface-bar);
+  background: var(--tabbar-bg);
   border-color: var(--separator);
   box-shadow: var(--shadow);
 }
